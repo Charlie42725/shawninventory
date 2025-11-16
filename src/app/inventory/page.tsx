@@ -21,7 +21,6 @@ interface Product {
   total_stock: number
   avg_unit_cost: number
   total_cost_value: number
-  note: string | null
   category?: Category
 }
 
@@ -506,9 +505,6 @@ function InventoryTable({
             <th className="px-3 sm:px-6 py-2 sm:py-3 text-center text-xs font-medium text-gray-500 dark:text-gray-400 uppercase tracking-wider hidden sm:table-cell">
               總成本價值
             </th>
-            <th className="px-3 sm:px-6 py-2 sm:py-3 text-left text-xs font-medium text-gray-500 dark:text-gray-400 uppercase tracking-wider hidden lg:table-cell">
-              備註
-            </th>
             <th className="px-3 sm:px-6 py-2 sm:py-3 text-center text-xs font-medium text-gray-500 dark:text-gray-400 uppercase tracking-wider">
               操作
             </th>
@@ -561,11 +557,6 @@ function InventoryTable({
               </td>
               <td className="px-3 sm:px-6 py-3 sm:py-4 whitespace-nowrap text-center text-xs sm:text-sm font-medium text-gray-900 dark:text-gray-100 hidden sm:table-cell">
                 ${product.total_cost_value.toFixed(2)}
-              </td>
-              <td className="px-3 sm:px-6 py-3 sm:py-4 text-xs sm:text-sm text-gray-600 dark:text-gray-400 max-w-xs hidden lg:table-cell">
-                <div className="truncate" title={product.note || ''}>
-                  {product.note || '-'}
-                </div>
               </td>
               <td className="px-3 sm:px-6 py-3 sm:py-4 whitespace-nowrap text-center text-xs sm:text-sm font-medium">
                 <button
@@ -1520,19 +1511,6 @@ function EditProductModal({
               />
               <p className="text-xs text-gray-500 dark:text-gray-400 mt-1">
                 註:調整庫存會記錄為手動調整
-              </p>
-            </div>
-          )}
-
-          {/* 備註欄位（唯讀，來自最新進貨記錄） */}
-          {product.note && (
-            <div>
-              <label className="block text-sm font-medium text-gray-900 dark:text-gray-100 mb-1">備註（來自最新進貨）</label>
-              <div className="w-full px-3 py-2 border border-gray-300 dark:border-gray-600 rounded-md bg-gray-50 dark:bg-gray-900 text-gray-700 dark:text-gray-300 text-sm">
-                {product.note}
-              </div>
-              <p className="text-xs text-gray-500 dark:text-gray-400 mt-1">
-                備註來自最新進貨記錄，如需修改請編輯進貨記錄
               </p>
             </div>
           )}

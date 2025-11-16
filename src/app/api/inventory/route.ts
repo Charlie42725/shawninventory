@@ -2,58 +2,17 @@ import { NextResponse } from 'next/server'
 import { getProducts } from '@/lib/inventory-utils'
 import { supabaseAdmin } from '@/lib/supabase'
 
-// GET - 取得產品列表（包含最新進貨備註）
+// GET - 取得產品列表
 export async function GET(request: Request) {
   try {
     const { searchParams } = new URL(request.url)
     const categoryId = searchParams.get('category_id')
 
-    // 查詢產品列表
-    let query = supabaseAdmin
-      .from('products')
-      .select('*, category:product_categories(*)')
-      .order('updated_at', { ascending: false })
-
-    if (categoryId) {
-      query = query.eq('category_id', parseInt(categoryId))
-    }
-
-    const { data: products, error: productsError } = await query
-
-    if (productsError) {
-      throw productsError
-    }
-
-    // 為每個產品查詢最新的進貨記錄備註
-    const productsWithNotes = await Promise.all(
-      (products || []).map(async (product) => {
-        // 查詢該產品最新的進貨記錄
-        let stockInQuery = supabaseAdmin
-          .from('stock_in')
-          .select('note')
-          .eq('category_id', product.category_id)
-          .eq('product_name', product.product_name)
-
-        // 處理 color 欄位 (可能是 null 或空字串)
-        if (product.color) {
-          stockInQuery = stockInQuery.eq('color', product.color)
-        } else {
-          stockInQuery = stockInQuery.is('color', null)
-        }
-
-        const { data: latestStockIn } = await stockInQuery
-          .order('created_at', { ascending: false })
-          .limit(1)
-          .maybeSingle()
-
-        return {
-          ...product,
-          note: latestStockIn?.note || null
-        }
-      })
+    const products = await getProducts(
+      categoryId ? parseInt(categoryId) : undefined
     )
 
-    return NextResponse.json(productsWithNotes)
+    return NextResponse.json(products)
   } catch (error: any) {
     console.error('Error fetching products:', error)
     return NextResponse.json(
