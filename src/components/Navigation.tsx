@@ -31,13 +31,28 @@ export default function Navigation() {
   }
 
   return (
-    <nav className="bg-gray-800 dark:bg-gray-950 shadow-sm sticky top-0 z-50 transition-colors">
+    <nav className="bg-gradient-to-r from-gray-800 to-gray-900 dark:from-gray-950 dark:to-gray-900 shadow-lg sticky top-0 z-50 transition-colors border-b border-gray-700 dark:border-gray-800">
       <div className="mx-auto max-w-7xl px-4 sm:px-6 lg:px-8">
         <div className="flex h-16 justify-between items-center">
           {/* Logo */}
-          <div className="flex items-center">
-            <Link href="/inventory" className="text-white text-lg sm:text-xl font-bold whitespace-nowrap">
-              🏪 管理系統
+          <div className="flex items-center gap-3">
+            <Link href="/inventory" className="flex items-center gap-3 group">
+              <div className="relative">
+                <div className="absolute -inset-1 bg-gradient-to-r from-indigo-600 to-purple-600 rounded-lg opacity-20 group-hover:opacity-30 transition duration-300 blur"></div>
+                <div className="relative bg-white dark:bg-gray-800 rounded-lg p-1.5 shadow-md ring-1 ring-gray-700 dark:ring-gray-600 transition-all group-hover:scale-105">
+                  <img
+                    src="/logo.jpg"
+                    alt="Logo"
+                    className="w-8 h-8 object-contain dark:invert transition-all"
+                  />
+                </div>
+              </div>
+              <span className="text-white text-lg sm:text-xl font-bold whitespace-nowrap hidden sm:inline group-hover:text-indigo-300 transition-colors">
+                庫存管理系統
+              </span>
+              <span className="text-white text-base font-bold whitespace-nowrap sm:hidden">
+                管理系統
+              </span>
             </Link>
           </div>
 

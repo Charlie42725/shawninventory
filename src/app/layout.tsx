@@ -15,8 +15,19 @@ const geistMono = Geist_Mono({
 });
 
 export const metadata: Metadata = {
-  title: "庫存管理系統",
-  description: "基於Next.js的庫存管理系統",
+  title: "庫存管理系統 | 專業庫存與財務管理平台",
+  description: "全功能庫存管理系統,支援進銷存管理、財務報表、AI智能分析,幫助您輕鬆管理業務",
+  keywords: ["庫存管理", "進銷存", "財務管理", "報表分析", "AI分析"],
+  authors: [{ name: "庫存管理系統" }],
+  icons: {
+    icon: "/logo.jpg",
+    apple: "/logo.jpg",
+  },
+  openGraph: {
+    title: "庫存管理系統",
+    description: "專業的庫存與財務管理平台",
+    type: "website",
+  },
 };
 
 export default function RootLayout({

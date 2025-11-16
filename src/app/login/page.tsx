@@ -32,13 +32,27 @@ export default function LoginPage() {
   }
 
   return (
-    <div className="min-h-screen bg-gray-50 dark:bg-gray-900 flex flex-col justify-center py-6 sm:py-12 px-4 sm:px-6 lg:px-8 transition-colors">
+    <div className="min-h-screen bg-gradient-to-br from-gray-50 to-gray-100 dark:from-gray-900 dark:to-gray-800 flex flex-col justify-center py-6 sm:py-12 px-4 sm:px-6 lg:px-8 transition-colors">
       <div className="sm:mx-auto sm:w-full sm:max-w-md">
-        <h2 className="mt-4 sm:mt-6 text-center text-2xl sm:text-3xl font-extrabold text-gray-900 dark:text-gray-100">
-          📊 庫存管理系統
+        {/* Logo */}
+        <div className="flex justify-center mb-6">
+          <div className="relative group">
+            <div className="absolute -inset-2 bg-gradient-to-r from-indigo-600 to-purple-600 rounded-full blur opacity-25 group-hover:opacity-40 transition duration-300"></div>
+            <div className="relative bg-white dark:bg-gray-800 rounded-full p-4 shadow-xl ring-1 ring-gray-200 dark:ring-gray-700 transition-all">
+              <img
+                src="/logo.jpg"
+                alt="Logo"
+                className="w-20 h-20 sm:w-24 sm:h-24 object-contain dark:invert transition-all"
+              />
+            </div>
+          </div>
+        </div>
+
+        <h2 className="mt-4 text-center text-2xl sm:text-3xl font-extrabold text-gray-900 dark:text-gray-100">
+          庫存管理系統
         </h2>
         <p className="mt-2 text-center text-xs sm:text-sm text-gray-600 dark:text-gray-400">
-          登入您的帳戶
+          登入您的帳戶以繼續
         </p>
       </div>
 
