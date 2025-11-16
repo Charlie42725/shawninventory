@@ -284,18 +284,58 @@ export async function PUT(request: Request) {
     if (order_type) updateData.order_type = order_type
     if (note !== undefined) updateData.note = note
 
-    // 如果要更新單價,需要重新計算總成本
+    // 如果要更新單價,需要重新計算總成本並更新產品的平均成本
     if (unit_cost !== undefined) {
-      // 先查詢進貨記錄獲取總數量
+      // 1. 先查詢進貨記錄獲取完整資訊
       const { data: stockInRecord } = await supabaseAdmin
         .from('stock_in')
-        .select('total_quantity')
+        .select('*')
         .eq('id', parseInt(id))
         .single()
 
       if (stockInRecord) {
-        updateData.unit_cost = parseFloat(unit_cost)
-        updateData.total_cost = parseFloat(unit_cost) * stockInRecord.total_quantity
+        const newUnitCost = parseFloat(unit_cost)
+        const oldUnitCost = stockInRecord.unit_cost
+        const newTotalCost = newUnitCost * stockInRecord.total_quantity
+        const oldTotalCost = stockInRecord.total_cost
+
+        updateData.unit_cost = newUnitCost
+        updateData.total_cost = newTotalCost
+
+        // 2. 查詢對應的產品
+        let productQuery = supabaseAdmin
+          .from('products')
+          .select('*')
+          .eq('category_id', stockInRecord.category_id)
+          .eq('product_name', stockInRecord.product_name)
+
+        // 處理 color 欄位
+        if (stockInRecord.color) {
+          productQuery = productQuery.eq('color', stockInRecord.color)
+        } else {
+          productQuery = productQuery.is('color', null)
+        }
+
+        const { data: product } = await productQuery.single()
+
+        if (product) {
+          // 3. 重新計算產品的平均成本
+          // 舊的總成本價值 - 這筆進貨的舊成本 + 這筆進貨的新成本
+          const newTotalCostValue = product.total_cost_value - oldTotalCost + newTotalCost
+          const newAvgUnitCost = product.total_stock > 0
+            ? newTotalCostValue / product.total_stock
+            : 0
+
+          // 4. 更新產品的成本資訊
+          await supabaseAdmin
+            .from('products')
+            .update({
+              avg_unit_cost: newAvgUnitCost,
+              total_cost_value: newTotalCostValue,
+              updated_at: new Date().toISOString(),
+            })
+            .eq('id', product.id)
+        }
       }
     }
 
@@ -313,7 +353,7 @@ export async function PUT(request: Request) {
     return NextResponse.json({
       success: true,
       data,
-      message: '進貨記錄已更新',
+      message: '進貨記錄已更新,產品成本已重新計算',
     })
 
   } catch (error: any) {
