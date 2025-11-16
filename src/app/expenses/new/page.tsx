@@ -68,21 +68,21 @@ export default function AddExpensePage() {
     <ProtectedLayout>
       <div className="max-w-2xl mx-auto space-y-6">
         <div className="flex items-center space-x-3">
-          <h1 className="text-3xl font-bold text-gray-900">💸 新增支出</h1>
+          <h1 className="text-3xl font-bold text-gray-900 dark:text-gray-100">💸 新增支出</h1>
         </div>
 
-        <div className="bg-white shadow-sm rounded-lg p-6">
+        <div className="bg-white dark:bg-gray-800 shadow-sm rounded-lg p-6 transition-colors">
           <form onSubmit={handleSubmit} className="space-y-6">
             {/* 支出類別 */}
             <div>
-              <label className="block text-sm font-medium text-gray-700 mb-2">
-                支出類別 <span className="text-red-500">*</span>
+              <label className="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-2">
+                支出類別 <span className="text-red-500 dark:text-red-400">*</span>
               </label>
               <select
                 value={formData.category}
                 onChange={(e) => setFormData({ ...formData, category: e.target.value })}
                 required
-                className="w-full px-3 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-indigo-500 focus:border-indigo-500"
+                className="w-full px-3 py-2 border border-gray-300 dark:border-gray-600 rounded-md focus:outline-none focus:ring-indigo-500 focus:border-indigo-500 bg-white dark:bg-gray-700 text-gray-900 dark:text-gray-100 transition-colors"
               >
                 <option value="">請選擇類別</option>
                 {EXPENSE_CATEGORIES.map((category) => (
@@ -95,8 +95,8 @@ export default function AddExpensePage() {
 
             {/* 金額 */}
             <div>
-              <label className="block text-sm font-medium text-gray-700 mb-2">
-                金額 (NT$) <span className="text-red-500">*</span>
+              <label className="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-2">
+                金額 (NT$) <span className="text-red-500 dark:text-red-400">*</span>
               </label>
               <input
                 type="number"
@@ -105,27 +105,27 @@ export default function AddExpensePage() {
                 value={formData.amount}
                 onChange={(e) => setFormData({ ...formData, amount: e.target.value })}
                 required
-                className="w-full px-3 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-indigo-500 focus:border-indigo-500"
+                className="w-full px-3 py-2 border border-gray-300 dark:border-gray-600 rounded-md focus:outline-none focus:ring-indigo-500 focus:border-indigo-500 bg-white dark:bg-gray-700 text-gray-900 dark:text-gray-100 transition-colors"
               />
             </div>
 
             {/* 日期 */}
             <div>
-              <label className="block text-sm font-medium text-gray-700 mb-2">
-                支出日期 <span className="text-red-500">*</span>
+              <label className="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-2">
+                支出日期 <span className="text-red-500 dark:text-red-400">*</span>
               </label>
               <input
                 type="date"
                 value={formData.date}
                 onChange={(e) => setFormData({ ...formData, date: e.target.value })}
                 required
-                className="w-full px-3 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-indigo-500 focus:border-indigo-500"
+                className="w-full px-3 py-2 border border-gray-300 dark:border-gray-600 rounded-md focus:outline-none focus:ring-indigo-500 focus:border-indigo-500 bg-white dark:bg-gray-700 text-gray-900 dark:text-gray-100 transition-colors"
               />
             </div>
 
             {/* 備註 */}
             <div>
-              <label className="block text-sm font-medium text-gray-700 mb-2">
+              <label className="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-2">
                 備註
               </label>
               <textarea
@@ -133,7 +133,7 @@ export default function AddExpensePage() {
                 onChange={(e) => setFormData({ ...formData, note: e.target.value })}
                 rows={3}
                 placeholder="供應商資訊、發票號碼、特殊說明等..."
-                className="w-full px-3 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-indigo-500 focus:border-indigo-500"
+                className="w-full px-3 py-2 border border-gray-300 dark:border-gray-600 rounded-md focus:outline-none focus:ring-indigo-500 focus:border-indigo-500 bg-white dark:bg-gray-700 text-gray-900 dark:text-gray-100 placeholder:text-gray-400 dark:placeholder:text-gray-500 transition-colors"
               />
             </div>
 
@@ -157,8 +157,8 @@ export default function AddExpensePage() {
         </div>
 
         {/* 常用支出模板 */}
-        <div className="bg-gray-50 rounded-lg p-4">
-          <h3 className="text-sm font-medium text-gray-700 mb-3">常用支出模板</h3>
+        <div className="bg-gray-50 dark:bg-gray-800 rounded-lg p-4 transition-colors">
+          <h3 className="text-sm font-medium text-gray-700 dark:text-gray-300 mb-3">常用支出模板</h3>
           <div className="grid grid-cols-1 md:grid-cols-2 gap-2">
             <button
               type="button"
@@ -168,7 +168,7 @@ export default function AddExpensePage() {
                 amount: '240000',
                 note: 'iPhone 15 進貨'
               })}
-              className="text-sm bg-white hover:bg-gray-50 text-gray-700 px-3 py-2 rounded border text-left"
+              className="text-sm bg-white dark:bg-gray-700 hover:bg-gray-50 dark:hover:bg-gray-600 text-gray-700 dark:text-gray-300 px-3 py-2 rounded border border-gray-300 dark:border-gray-600 text-left transition-colors"
             >
               📱 iPhone 進貨
             </button>
@@ -180,7 +180,7 @@ export default function AddExpensePage() {
                 amount: '3500',
                 note: '順豐快遞配送費'
               })}
-              className="text-sm bg-white hover:bg-gray-50 text-gray-700 px-3 py-2 rounded border text-left"
+              className="text-sm bg-white dark:bg-gray-700 hover:bg-gray-50 dark:hover:bg-gray-600 text-gray-700 dark:text-gray-300 px-3 py-2 rounded border border-gray-300 dark:border-gray-600 text-left transition-colors"
             >
               🚚 快遞運費
             </button>
@@ -192,7 +192,7 @@ export default function AddExpensePage() {
                 amount: '15000',
                 note: 'Facebook 廣告投放'
               })}
-              className="text-sm bg-white hover:bg-gray-50 text-gray-700 px-3 py-2 rounded border text-left"
+              className="text-sm bg-white dark:bg-gray-700 hover:bg-gray-50 dark:hover:bg-gray-600 text-gray-700 dark:text-gray-300 px-3 py-2 rounded border border-gray-300 dark:border-gray-600 text-left transition-colors"
             >
               📢 廣告投放
             </button>
@@ -204,7 +204,7 @@ export default function AddExpensePage() {
                 amount: '2800',
                 note: '蝦皮平台手續費'
               })}
-              className="text-sm bg-white hover:bg-gray-50 text-gray-700 px-3 py-2 rounded border text-left"
+              className="text-sm bg-white dark:bg-gray-700 hover:bg-gray-50 dark:hover:bg-gray-600 text-gray-700 dark:text-gray-300 px-3 py-2 rounded border border-gray-300 dark:border-gray-600 text-left transition-colors"
             >
               💳 平台手續費
             </button>
@@ -212,18 +212,18 @@ export default function AddExpensePage() {
         </div>
 
         {/* 注意事項 */}
-        <div className="bg-blue-50 border border-blue-200 rounded-lg p-4">
+        <div className="bg-blue-50 dark:bg-blue-900/20 border border-blue-200 dark:border-blue-800 rounded-lg p-4 transition-colors">
           <div className="flex">
             <div className="flex-shrink-0">
-              <svg className="h-5 w-5 text-blue-400" viewBox="0 0 20 20" fill="currentColor">
+              <svg className="h-5 w-5 text-blue-400 dark:text-blue-500" viewBox="0 0 20 20" fill="currentColor">
                 <path fillRule="evenodd" d="M18 10a8 8 0 11-16 0 8 8 0 0116 0zm-7-4a1 1 0 11-2 0 1 1 0 012 0zM9 9a1 1 0 000 2v3a1 1 0 001 1h1a1 1 0 100-2v-3a1 1 0 00-1-1H9z" clipRule="evenodd" />
               </svg>
             </div>
             <div className="ml-3">
-              <h3 className="text-sm font-medium text-blue-800">
+              <h3 className="text-sm font-medium text-blue-800 dark:text-blue-300">
                 支出記錄注意事項
               </h3>
-              <div className="mt-2 text-sm text-blue-700">
+              <div className="mt-2 text-sm text-blue-700 dark:text-blue-400">
                 <ul className="list-disc list-inside space-y-1">
                   <li>請務必選擇正確的支出類別，便於後續財務分析</li>
                   <li>建議上傳或記錄收據資訊，以備稅務查核</li>
@@ -236,24 +236,24 @@ export default function AddExpensePage() {
         </div>
 
         {/* 快速動作 */}
-        <div className="bg-gray-50 rounded-lg p-4">
-          <h3 className="text-sm font-medium text-gray-700 mb-3">快速動作</h3>
+        <div className="bg-gray-50 dark:bg-gray-800 rounded-lg p-4 transition-colors">
+          <h3 className="text-sm font-medium text-gray-700 dark:text-gray-300 mb-3">快速動作</h3>
           <div className="flex flex-wrap gap-2">
             <Link
               href="/expenses"
-              className="text-sm bg-white hover:bg-gray-50 text-gray-700 px-3 py-1 rounded border"
+              className="text-sm bg-white dark:bg-gray-700 hover:bg-gray-50 dark:hover:bg-gray-600 text-gray-700 dark:text-gray-300 px-3 py-1 rounded border border-gray-300 dark:border-gray-600 transition-colors"
             >
               📊 支出列表
             </Link>
             <Link
               href="/reports"
-              className="text-sm bg-white hover:bg-gray-50 text-gray-700 px-3 py-1 rounded border"
+              className="text-sm bg-white dark:bg-gray-700 hover:bg-gray-50 dark:hover:bg-gray-600 text-gray-700 dark:text-gray-300 px-3 py-1 rounded border border-gray-300 dark:border-gray-600 transition-colors"
             >
               📈 財務報表
             </Link>
             <Link
               href="/dashboard"
-              className="text-sm bg-white hover:bg-gray-50 text-gray-700 px-3 py-1 rounded border"
+              className="text-sm bg-white dark:bg-gray-700 hover:bg-gray-50 dark:hover:bg-gray-600 text-gray-700 dark:text-gray-300 px-3 py-1 rounded border border-gray-300 dark:border-gray-600 transition-colors"
             >
               🏠 系統總覽
             </Link>

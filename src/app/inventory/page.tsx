@@ -66,7 +66,6 @@ export default function InventoryPage() {
   const [showStockInModal, setShowStockInModal] = useState(false)
   const [editingStockIn, setEditingStockIn] = useState<StockInRecord | null>(null)
   const [editingProduct, setEditingProduct] = useState<Product | null>(null)
-  const [showCreateProductModal, setShowCreateProductModal] = useState(false)
   const [dateFilter, setDateFilter] = useState({
     startDate: '',
     endDate: ''
@@ -201,22 +200,13 @@ export default function InventoryPage() {
             <h1 className="text-2xl sm:text-3xl font-bold text-gray-900 dark:text-gray-100">庫存管理</h1>
             <p className="mt-1 sm:mt-2 text-sm sm:text-base text-gray-600 dark:text-gray-400">管理產品庫存、進貨記錄與庫存異動</p>
           </div>
-          <div className="flex gap-2 sm:gap-3">
-            <button
-              onClick={() => setShowCreateProductModal(true)}
-              className="btn bg-blue-600 hover:bg-blue-700 text-white px-4 py-2 rounded-md flex items-center justify-center text-sm sm:text-base transition-colors whitespace-nowrap"
-            >
-              <span className="mr-2">+</span>
-              新增產品
-            </button>
-            <button
-              onClick={() => setShowStockInModal(true)}
-              className="btn bg-green-600 hover:bg-green-700 text-white px-4 py-2 rounded-md flex items-center justify-center text-sm sm:text-base transition-colors whitespace-nowrap"
-            >
-              <span className="mr-2">+</span>
-              新增進貨
-            </button>
-          </div>
+          <button
+            onClick={() => setShowStockInModal(true)}
+            className="btn bg-green-600 hover:bg-green-700 text-white px-4 py-2 rounded-md flex items-center justify-center text-sm sm:text-base transition-colors whitespace-nowrap"
+          >
+            <span className="mr-2">+</span>
+            新增進貨
+          </button>
         </div>
 
         {/* 庫存統計卡片 */}
@@ -449,18 +439,6 @@ export default function InventoryPage() {
           />
         )}
 
-        {/* 創建產品 Modal */}
-        {showCreateProductModal && (
-          <CreateProductModal
-            categories={categories}
-            onClose={() => setShowCreateProductModal(false)}
-            onSuccess={() => {
-              setShowCreateProductModal(false)
-              fetchData()
-            }}
-          />
-        )}
-
         {/* 刪除確認對話框 */}
         <ConfirmDialog
           isOpen={deleteConfirm.isOpen}
@@ -666,6 +644,9 @@ function StockInTable({
             <th className="px-6 py-3 text-center text-xs font-medium text-gray-500 dark:text-gray-400 uppercase tracking-wider">
               總成本
             </th>
+            <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 dark:text-gray-400 uppercase tracking-wider">
+              備註
+            </th>
             <th className="px-6 py-3 text-center text-xs font-medium text-gray-500 dark:text-gray-400 uppercase tracking-wider">
               操作
             </th>
@@ -703,6 +684,11 @@ function StockInTable({
               </td>
               <td className="px-6 py-4 whitespace-nowrap text-center text-sm font-bold text-gray-900 dark:text-gray-100">
                 ${record.total_cost.toFixed(2)}
+              </td>
+              <td className="px-6 py-4 text-sm text-gray-600 dark:text-gray-400 max-w-xs">
+                <div className="truncate" title={record.note || ''}>
+                  {record.note || '-'}
+                </div>
               </td>
               <td className="px-6 py-4 whitespace-nowrap text-center text-sm font-medium">
                 <button
@@ -1404,179 +1390,3 @@ function EditProductModal({
   )
 }
 
-// 創建產品 Modal
-function CreateProductModal({
-  categories,
-  onClose,
-  onSuccess
-}: {
-  categories: Category[]
-  onClose: () => void
-  onSuccess: () => void
-}) {
-  const [formData, setFormData] = useState({
-    category_id: '',
-    product_name: '',
-    color: '',
-    ip_category: '',
-    size_stock: {} as Record<string, number>
-  })
-  const [loading, setLoading] = useState(false)
-
-  const selectedCategory = categories.find(c => c.id === parseInt(formData.category_id || '0'))
-  const availableSizes = selectedCategory?.size_config?.sizes || []
-
-  const updateSizeQuantity = (size: string, value: string) => {
-    const qty = parseInt(value) || 0
-    setFormData(prev => ({
-      ...prev,
-      size_stock: {
-        ...prev.size_stock,
-        [size]: qty
-      }
-    }))
-  }
-
-  const handleSubmit = async (e: React.FormEvent) => {
-    e.preventDefault()
-    setLoading(true)
-
-    try {
-      const res = await fetch('/api/inventory', {
-        method: 'POST',
-        headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify(formData),
-      })
-
-      const data = await res.json()
-
-      if (data.success) {
-        alert(data.message)
-        onSuccess()
-      } else {
-        alert(`錯誤: ${data.error}`)
-        setLoading(false)
-      }
-    } catch (error) {
-      console.error('Failed to create product:', error)
-      alert('創建失敗')
-      setLoading(false)
-    }
-  }
-
-  return (
-    <div className="fixed inset-0 bg-black bg-opacity-50 flex items-center justify-center z-50 p-4">
-      <div className="bg-white rounded-lg p-4 sm:p-6 w-full max-w-2xl max-h-[90vh] overflow-y-auto">
-        <div className="flex justify-between items-center mb-3 sm:mb-4">
-          <h3 className="text-base sm:text-lg font-semibold text-gray-900">新增產品</h3>
-          <button onClick={onClose} className="text-gray-400 hover:text-gray-600 text-xl">
-            ✕
-          </button>
-        </div>
-
-        <form onSubmit={handleSubmit} className="space-y-3 sm:space-y-4">
-          <div>
-            <label className="block text-sm font-medium text-gray-900 mb-1">類別 *</label>
-            <select
-              value={formData.category_id}
-              onChange={e => setFormData({...formData, category_id: e.target.value, size_stock: {}})}
-              className="w-full px-3 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-indigo-500 text-gray-900"
-              required
-            >
-              <option value="">請選擇類別</option>
-              {categories.map(cat => (
-                <option key={cat.id} value={cat.id}>{cat.name}</option>
-              ))}
-            </select>
-          </div>
-
-          <div>
-            <label className="block text-sm font-medium text-gray-900 mb-1">產品名稱 *</label>
-            <input
-              type="text"
-              value={formData.product_name}
-              onChange={e => setFormData({...formData, product_name: e.target.value})}
-              className="w-full px-3 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-indigo-500 text-gray-900"
-              required
-            />
-          </div>
-
-          {selectedCategory?.name !== '潮玩' && (
-            <div>
-              <label className="block text-sm font-medium text-gray-900 mb-1">顏色</label>
-              <input
-                type="text"
-                value={formData.color}
-                onChange={e => setFormData({...formData, color: e.target.value})}
-                className="w-full px-3 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-indigo-500 text-gray-900"
-                placeholder="例如: 黑色、白色"
-              />
-            </div>
-          )}
-
-          {selectedCategory?.name === '潮玩' && (
-            <div>
-              <label className="block text-sm font-medium text-gray-900 mb-1">IP分類</label>
-              <input
-                type="text"
-                value={formData.ip_category}
-                onChange={e => setFormData({...formData, ip_category: e.target.value})}
-                className="w-full px-3 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-indigo-500 text-gray-900"
-                placeholder="例如: 海賊王、火影忍者"
-              />
-            </div>
-          )}
-
-          {/* 初始庫存 */}
-          {availableSizes.length > 0 ? (
-            <div>
-              <label className="block text-xs sm:text-sm font-medium text-gray-900 mb-2">初始庫存(選填)</label>
-              <div className="grid grid-cols-2 sm:grid-cols-3 gap-2">
-                {availableSizes.map(size => (
-                  <div key={size} className="flex items-center gap-2">
-                    <label className="w-12 sm:w-16 text-xs sm:text-sm text-gray-700 flex-shrink-0">{size}:</label>
-                    <input
-                      type="number"
-                      min="0"
-                      value={formData.size_stock[size] || ''}
-                      onChange={e => updateSizeQuantity(size, e.target.value)}
-                      className="flex-1 px-2 py-1 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-indigo-500 text-gray-900 text-sm"
-                    />
-                  </div>
-                ))}
-              </div>
-            </div>
-          ) : formData.category_id && (
-            <div>
-              <label className="block text-sm font-medium text-gray-900 mb-1">初始庫存(選填)</label>
-              <input
-                type="number"
-                min="0"
-                value={formData.size_stock['default'] || ''}
-                onChange={e => updateSizeQuantity('default', e.target.value)}
-                className="w-full px-3 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-indigo-500 text-gray-900"
-              />
-            </div>
-          )}
-
-          <div className="flex flex-col sm:flex-row gap-3 pt-4">
-            <button
-              type="button"
-              onClick={onClose}
-              className="flex-1 px-4 py-2 border border-gray-300 rounded-md text-sm sm:text-base text-gray-700 hover:bg-gray-50 transition-colors"
-            >
-              取消
-            </button>
-            <button
-              type="submit"
-              disabled={loading}
-              className="flex-1 px-4 py-2 bg-blue-600 text-white rounded-md text-sm sm:text-base hover:bg-blue-700 disabled:opacity-50 transition-colors"
-            >
-              {loading ? '處理中...' : '創建產品'}
-            </button>
-          </div>
-        </form>
-      </div>
-    </div>
-  )
-}

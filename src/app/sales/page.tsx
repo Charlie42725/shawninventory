@@ -315,6 +315,9 @@ export default function SalesPage() {
                   <th className="px-3 sm:px-6 py-2 sm:py-3 text-center text-xs font-medium text-gray-500 dark:text-gray-400 uppercase tracking-wider">
                     總計
                   </th>
+                  <th className="px-3 sm:px-6 py-2 sm:py-3 text-left text-xs font-medium text-gray-500 dark:text-gray-400 uppercase tracking-wider hidden lg:table-cell">
+                    備註
+                  </th>
                   <th className="px-3 sm:px-6 py-2 sm:py-3 text-center text-xs font-medium text-gray-500 dark:text-gray-400 uppercase tracking-wider">
                     操作
                   </th>
@@ -364,6 +367,11 @@ export default function SalesPage() {
                       <td className="px-3 sm:px-6 py-3 sm:py-4 whitespace-nowrap text-center text-xs sm:text-sm font-bold text-gray-900 dark:text-gray-100">
                         ${sale.total_amount.toFixed(2)}
                       </td>
+                      <td className="px-3 sm:px-6 py-3 sm:py-4 text-xs sm:text-sm text-gray-600 dark:text-gray-400 max-w-xs hidden lg:table-cell">
+                        <div className="truncate" title={sale.note || ''}>
+                          {sale.note || '-'}
+                        </div>
+                      </td>
                       <td className="px-3 sm:px-6 py-3 sm:py-4 whitespace-nowrap text-center text-xs sm:text-sm font-medium">
                         <button
                           onClick={() => setEditingSale(sale)}
@@ -382,7 +390,7 @@ export default function SalesPage() {
                   ))
                 ) : (
                   <tr>
-                    <td colSpan={10} className="px-3 sm:px-6 py-4 text-center text-sm text-gray-500 dark:text-gray-400">
+                    <td colSpan={11} className="px-3 sm:px-6 py-4 text-center text-sm text-gray-500 dark:text-gray-400">
                       {search ? '沒有符合搜尋條件的銷售記錄' : '目前沒有銷售記錄'}
                     </td>
                   </tr>
@@ -522,10 +530,10 @@ function SaleModal({
 
   return (
     <div className="fixed inset-0 bg-black bg-opacity-50 flex items-center justify-center z-50 p-4">
-      <div className="bg-white rounded-lg p-4 sm:p-6 w-full max-w-2xl max-h-[90vh] overflow-y-auto">
+      <div className="bg-white dark:bg-gray-800 rounded-lg p-4 sm:p-6 w-full max-w-2xl max-h-[90vh] overflow-y-auto transition-colors">
         <div className="flex justify-between items-center mb-3 sm:mb-4">
-          <h3 className="text-base sm:text-lg font-semibold text-gray-900">新增銷售</h3>
-          <button onClick={onClose} className="text-gray-400 hover:text-gray-600 text-xl">
+          <h3 className="text-base sm:text-lg font-semibold text-gray-900 dark:text-gray-100">新增銷售</h3>
+          <button onClick={onClose} className="text-gray-400 dark:text-gray-500 hover:text-gray-600 dark:hover:text-gray-300 text-xl transition-colors">
             ✕
           </button>
         </div>
@@ -533,21 +541,21 @@ function SaleModal({
         <form onSubmit={handleSubmit} className="space-y-3 sm:space-y-4">
           <div className="grid grid-cols-1 sm:grid-cols-2 gap-3 sm:gap-4">
             <div>
-              <label className="block text-sm font-medium text-gray-900 mb-1">日期</label>
+              <label className="block text-sm font-medium text-gray-900 dark:text-gray-100 mb-1">日期</label>
               <input
                 type="date"
                 value={formData.date}
                 onChange={e => setFormData({...formData, date: e.target.value})}
-                className="w-full px-3 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-indigo-500 text-gray-900"
+                className="w-full px-3 py-2 border border-gray-300 dark:border-gray-600 rounded-md focus:outline-none focus:ring-2 focus:ring-indigo-500 text-gray-900 dark:text-gray-100 bg-white dark:bg-gray-700 transition-colors"
                 required
               />
             </div>
             <div>
-              <label className="block text-sm font-medium text-gray-900 mb-1">客戶類型 *</label>
+              <label className="block text-sm font-medium text-gray-900 dark:text-gray-100 mb-1">客戶類型 *</label>
               <select
                 value={formData.customer_type}
                 onChange={e => setFormData({...formData, customer_type: e.target.value})}
-                className="w-full px-3 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-indigo-500 text-gray-900"
+                className="w-full px-3 py-2 border border-gray-300 dark:border-gray-600 rounded-md focus:outline-none focus:ring-2 focus:ring-indigo-500 text-gray-900 dark:text-gray-100 bg-white dark:bg-gray-700 transition-colors"
                 required
               >
                 {CUSTOMER_TYPES.map(type => (
@@ -558,11 +566,11 @@ function SaleModal({
           </div>
 
           <div>
-            <label className="block text-sm font-medium text-gray-900 mb-1">產品 *</label>
+            <label className="block text-sm font-medium text-gray-900 dark:text-gray-100 mb-1">產品 *</label>
             <select
               value={formData.product_id}
               onChange={e => setFormData({...formData, product_id: e.target.value, size: ''})}
-              className="w-full px-3 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-indigo-500 text-gray-900"
+              className="w-full px-3 py-2 border border-gray-300 dark:border-gray-600 rounded-md focus:outline-none focus:ring-2 focus:ring-indigo-500 text-gray-900 dark:text-gray-100 bg-white dark:bg-gray-700 transition-colors"
               required
             >
               <option value="">請選擇產品</option>
@@ -581,11 +589,11 @@ function SaleModal({
 
           {hasSize && (
             <div>
-              <label className="block text-sm font-medium text-gray-900 mb-1">尺寸 *</label>
+              <label className="block text-sm font-medium text-gray-900 dark:text-gray-100 mb-1">尺寸 *</label>
               <select
                 value={formData.size}
                 onChange={e => setFormData({...formData, size: e.target.value})}
-                className="w-full px-3 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-indigo-500 text-gray-900"
+                className="w-full px-3 py-2 border border-gray-300 dark:border-gray-600 rounded-md focus:outline-none focus:ring-2 focus:ring-indigo-500 text-gray-900 dark:text-gray-100 bg-white dark:bg-gray-700 transition-colors"
                 required
               >
                 <option value="">請選擇尺寸</option>
@@ -602,11 +610,11 @@ function SaleModal({
 
           <div className="grid grid-cols-1 sm:grid-cols-2 gap-3 sm:gap-4">
             <div>
-              <label className="block text-xs sm:text-sm font-medium text-gray-900 mb-1">通路</label>
+              <label className="block text-xs sm:text-sm font-medium text-gray-900 dark:text-gray-100 mb-1">通路</label>
               <select
                 value={formData.channel}
                 onChange={e => setFormData({...formData, channel: e.target.value})}
-                className="w-full px-3 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-indigo-500 text-gray-900 text-sm"
+                className="w-full px-3 py-2 border border-gray-300 dark:border-gray-600 rounded-md focus:outline-none focus:ring-2 focus:ring-indigo-500 text-gray-900 dark:text-gray-100 bg-white dark:bg-gray-700 text-sm transition-colors"
               >
                 <option value="">請選擇</option>
                 {CHANNELS.map(channel => (
@@ -615,11 +623,11 @@ function SaleModal({
               </select>
             </div>
             <div>
-              <label className="block text-xs sm:text-sm font-medium text-gray-900 mb-1">運送方式</label>
+              <label className="block text-xs sm:text-sm font-medium text-gray-900 dark:text-gray-100 mb-1">運送方式</label>
               <select
                 value={formData.shipping_method}
                 onChange={e => setFormData({...formData, shipping_method: e.target.value})}
-                className="w-full px-3 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-indigo-500 text-gray-900 text-sm"
+                className="w-full px-3 py-2 border border-gray-300 dark:border-gray-600 rounded-md focus:outline-none focus:ring-2 focus:ring-indigo-500 text-gray-900 dark:text-gray-100 bg-white dark:bg-gray-700 text-sm transition-colors"
               >
                 <option value="">請選擇</option>
                 {SHIPPING_METHODS.map(method => (
@@ -631,43 +639,43 @@ function SaleModal({
 
           <div className="grid grid-cols-1 sm:grid-cols-2 gap-3 sm:gap-4">
             <div>
-              <label className="block text-xs sm:text-sm font-medium text-gray-900 mb-1">單價 ($) *</label>
+              <label className="block text-xs sm:text-sm font-medium text-gray-900 dark:text-gray-100 mb-1">單價 ($) *</label>
               <input
                 type="number"
                 step="0.01"
                 min="0"
                 value={formData.unit_price}
                 onChange={e => setFormData({...formData, unit_price: e.target.value})}
-                className="w-full px-3 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-indigo-500 text-gray-900 text-sm"
+                className="w-full px-3 py-2 border border-gray-300 dark:border-gray-600 rounded-md focus:outline-none focus:ring-2 focus:ring-indigo-500 text-gray-900 dark:text-gray-100 bg-white dark:bg-gray-700 text-sm transition-colors"
                 required
               />
             </div>
             <div>
-              <label className="block text-xs sm:text-sm font-medium text-gray-900 mb-1">數量 *</label>
+              <label className="block text-xs sm:text-sm font-medium text-gray-900 dark:text-gray-100 mb-1">數量 *</label>
               <input
                 type="number"
                 min="1"
                 value={formData.quantity}
                 onChange={e => setFormData({...formData, quantity: e.target.value})}
-                className="w-full px-3 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-indigo-500 text-gray-900 text-sm"
+                className="w-full px-3 py-2 border border-gray-300 dark:border-gray-600 rounded-md focus:outline-none focus:ring-2 focus:ring-indigo-500 text-gray-900 dark:text-gray-100 bg-white dark:bg-gray-700 text-sm transition-colors"
                 required
               />
             </div>
           </div>
 
           <div>
-            <label className="block text-sm font-medium text-gray-900 mb-1">備註</label>
+            <label className="block text-sm font-medium text-gray-900 dark:text-gray-100 mb-1">備註</label>
             <textarea
               rows={2}
               value={formData.note}
               onChange={e => setFormData({...formData, note: e.target.value})}
-              className="w-full px-3 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-indigo-500 text-gray-900"
+              className="w-full px-3 py-2 border border-gray-300 dark:border-gray-600 rounded-md focus:outline-none focus:ring-2 focus:ring-indigo-500 text-gray-900 dark:text-gray-100 bg-white dark:bg-gray-700 transition-colors"
               placeholder="選填"
             />
           </div>
 
-          <div className="bg-gray-100 p-3 sm:p-4 rounded">
-            <p className="text-base sm:text-lg font-bold text-gray-900">
+          <div className="bg-gray-100 dark:bg-gray-900 p-3 sm:p-4 rounded transition-colors">
+            <p className="text-base sm:text-lg font-bold text-gray-900 dark:text-gray-100">
               總計: ${calculateTotal()}
             </p>
           </div>
@@ -676,7 +684,7 @@ function SaleModal({
             <button
               type="button"
               onClick={onClose}
-              className="flex-1 px-4 py-2 border border-gray-300 rounded-md text-sm sm:text-base text-gray-700 hover:bg-gray-50 transition-colors"
+              className="flex-1 px-4 py-2 border border-gray-300 dark:border-gray-600 rounded-md text-sm sm:text-base text-gray-700 dark:text-gray-300 hover:bg-gray-50 dark:hover:bg-gray-700 transition-colors"
             >
               取消
             </button>
@@ -752,54 +760,54 @@ function EditSaleModal({
 
   return (
     <div className="fixed inset-0 bg-black bg-opacity-50 flex items-center justify-center z-50 p-4">
-      <div className="bg-white rounded-lg p-4 sm:p-6 w-full max-w-2xl max-h-[90vh] overflow-y-auto">
+      <div className="bg-white dark:bg-gray-800 rounded-lg p-4 sm:p-6 w-full max-w-2xl max-h-[90vh] overflow-y-auto transition-colors">
         <div className="flex justify-between items-center mb-3 sm:mb-4">
-          <h3 className="text-base sm:text-lg font-semibold text-gray-900">編輯銷售記錄</h3>
-          <button onClick={onClose} className="text-gray-400 hover:text-gray-600 text-xl">
+          <h3 className="text-base sm:text-lg font-semibold text-gray-900 dark:text-gray-100">編輯銷售記錄</h3>
+          <button onClick={onClose} className="text-gray-400 dark:text-gray-500 hover:text-gray-600 dark:hover:text-gray-300 text-xl transition-colors">
             ✕
           </button>
         </div>
 
         <form onSubmit={handleSubmit} className="space-y-3 sm:space-y-4">
           {/* 顯示產品信息(只讀) */}
-          <div className="bg-gray-50 p-3 rounded-md">
-            <h4 className="text-sm font-medium text-gray-700 mb-2">產品資訊</h4>
+          <div className="bg-gray-50 dark:bg-gray-900 p-3 rounded-md transition-colors">
+            <h4 className="text-sm font-medium text-gray-700 dark:text-gray-300 mb-2">產品資訊</h4>
             <div className="grid grid-cols-2 gap-2 text-sm">
               <div>
-                <span className="text-gray-500">產品:</span> {sale.product_name}
+                <span className="text-gray-500 dark:text-gray-400">產品:</span> <span className="text-gray-900 dark:text-gray-100">{sale.product_name}</span>
               </div>
               <div>
-                <span className="text-gray-500">尺寸:</span> {sale.size || '-'}
+                <span className="text-gray-500 dark:text-gray-400">尺寸:</span> <span className="text-gray-900 dark:text-gray-100">{sale.size || '-'}</span>
               </div>
               <div>
-                <span className="text-gray-500">數量:</span> {sale.quantity}
+                <span className="text-gray-500 dark:text-gray-400">數量:</span> <span className="text-gray-900 dark:text-gray-100">{sale.quantity}</span>
               </div>
               <div>
-                <span className="text-gray-500">原單價:</span> ${sale.unit_price.toFixed(2)}
+                <span className="text-gray-500 dark:text-gray-400">原單價:</span> <span className="text-gray-900 dark:text-gray-100">${sale.unit_price.toFixed(2)}</span>
               </div>
             </div>
-            <p className="text-xs text-gray-500 mt-2">
+            <p className="text-xs text-gray-500 dark:text-gray-400 mt-2">
               註:產品、尺寸、數量等核心資訊無法修改,如需變更請刪除後重新建立
             </p>
           </div>
 
           <div className="grid grid-cols-1 sm:grid-cols-2 gap-3 sm:gap-4">
             <div>
-              <label className="block text-sm font-medium text-gray-900 mb-1">日期</label>
+              <label className="block text-sm font-medium text-gray-900 dark:text-gray-100 mb-1">日期</label>
               <input
                 type="date"
                 value={formData.date}
                 onChange={e => setFormData({...formData, date: e.target.value})}
-                className="w-full px-3 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-indigo-500 text-gray-900"
+                className="w-full px-3 py-2 border border-gray-300 dark:border-gray-600 rounded-md focus:outline-none focus:ring-2 focus:ring-indigo-500 text-gray-900 dark:text-gray-100 bg-white dark:bg-gray-700 transition-colors"
                 required
               />
             </div>
             <div>
-              <label className="block text-sm font-medium text-gray-900 mb-1">客戶類型 *</label>
+              <label className="block text-sm font-medium text-gray-900 dark:text-gray-100 mb-1">客戶類型 *</label>
               <select
                 value={formData.customer_type}
                 onChange={e => setFormData({...formData, customer_type: e.target.value})}
-                className="w-full px-3 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-indigo-500 text-gray-900"
+                className="w-full px-3 py-2 border border-gray-300 dark:border-gray-600 rounded-md focus:outline-none focus:ring-2 focus:ring-indigo-500 text-gray-900 dark:text-gray-100 bg-white dark:bg-gray-700 transition-colors"
                 required
               >
                 {CUSTOMER_TYPES.map(type => (
@@ -811,11 +819,11 @@ function EditSaleModal({
 
           <div className="grid grid-cols-1 sm:grid-cols-2 gap-3 sm:gap-4">
             <div>
-              <label className="block text-xs sm:text-sm font-medium text-gray-900 mb-1">通路</label>
+              <label className="block text-xs sm:text-sm font-medium text-gray-900 dark:text-gray-100 mb-1">通路</label>
               <select
                 value={formData.channel}
                 onChange={e => setFormData({...formData, channel: e.target.value})}
-                className="w-full px-3 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-indigo-500 text-gray-900 text-sm"
+                className="w-full px-3 py-2 border border-gray-300 dark:border-gray-600 rounded-md focus:outline-none focus:ring-2 focus:ring-indigo-500 text-gray-900 dark:text-gray-100 bg-white dark:bg-gray-700 text-sm transition-colors"
               >
                 <option value="">請選擇</option>
                 {CHANNELS.map(channel => (
@@ -824,11 +832,11 @@ function EditSaleModal({
               </select>
             </div>
             <div>
-              <label className="block text-xs sm:text-sm font-medium text-gray-900 mb-1">運送方式</label>
+              <label className="block text-xs sm:text-sm font-medium text-gray-900 dark:text-gray-100 mb-1">運送方式</label>
               <select
                 value={formData.shipping_method}
                 onChange={e => setFormData({...formData, shipping_method: e.target.value})}
-                className="w-full px-3 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-indigo-500 text-gray-900 text-sm"
+                className="w-full px-3 py-2 border border-gray-300 dark:border-gray-600 rounded-md focus:outline-none focus:ring-2 focus:ring-indigo-500 text-gray-900 dark:text-gray-100 bg-white dark:bg-gray-700 text-sm transition-colors"
               >
                 <option value="">請選擇</option>
                 {SHIPPING_METHODS.map(method => (
@@ -839,31 +847,31 @@ function EditSaleModal({
           </div>
 
           <div>
-            <label className="block text-sm font-medium text-gray-900 mb-1">單價 ($) *</label>
+            <label className="block text-sm font-medium text-gray-900 dark:text-gray-100 mb-1">單價 ($) *</label>
             <input
               type="number"
               step="0.01"
               min="0"
               value={formData.unit_price}
               onChange={e => setFormData({...formData, unit_price: e.target.value})}
-              className="w-full px-3 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-indigo-500 text-gray-900"
+              className="w-full px-3 py-2 border border-gray-300 dark:border-gray-600 rounded-md focus:outline-none focus:ring-2 focus:ring-indigo-500 text-gray-900 dark:text-gray-100 bg-white dark:bg-gray-700 transition-colors"
               required
             />
           </div>
 
           <div>
-            <label className="block text-sm font-medium text-gray-900 mb-1">備註</label>
+            <label className="block text-sm font-medium text-gray-900 dark:text-gray-100 mb-1">備註</label>
             <textarea
               rows={2}
               value={formData.note}
               onChange={e => setFormData({...formData, note: e.target.value})}
-              className="w-full px-3 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-indigo-500 text-gray-900"
+              className="w-full px-3 py-2 border border-gray-300 dark:border-gray-600 rounded-md focus:outline-none focus:ring-2 focus:ring-indigo-500 text-gray-900 dark:text-gray-100 bg-white dark:bg-gray-700 transition-colors"
               placeholder="選填"
             />
           </div>
 
-          <div className="bg-gray-100 p-3 sm:p-4 rounded">
-            <p className="text-base sm:text-lg font-bold text-gray-900">
+          <div className="bg-gray-100 dark:bg-gray-900 p-3 sm:p-4 rounded transition-colors">
+            <p className="text-base sm:text-lg font-bold text-gray-900 dark:text-gray-100">
               總計: ${calculateTotal()}
             </p>
           </div>
@@ -872,7 +880,7 @@ function EditSaleModal({
             <button
               type="button"
               onClick={onClose}
-              className="flex-1 px-4 py-2 border border-gray-300 rounded-md text-sm sm:text-base text-gray-700 hover:bg-gray-50 transition-colors"
+              className="flex-1 px-4 py-2 border border-gray-300 dark:border-gray-600 rounded-md text-sm sm:text-base text-gray-700 dark:text-gray-300 hover:bg-gray-50 dark:hover:bg-gray-700 transition-colors"
             >
               取消
             </button>
