@@ -279,7 +279,7 @@ export const SIZE_CONFIGS: Record<ProductCategoryName, string[]> = {
 // 選項常數
 // ==========================================
 
-export const ORDER_TYPES = ['進貨', '預購'] as const
+export const ORDER_TYPES = ['進貨', '預購', '批發'] as const
 export const CUSTOMER_TYPES = ['零售', '批發', '預購'] as const
 export const CHANNELS = ['社團', '店家', '國外'] as const
 export const SHIPPING_METHODS = ['現貨面交', '店到店', '宅配'] as const
