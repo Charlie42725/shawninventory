@@ -21,6 +21,7 @@ interface Product {
   total_stock: number
   avg_unit_cost: number
   total_cost_value: number
+  note: string | null
   category?: Category
 }
 
