@@ -108,6 +108,7 @@ export interface Database {
           total_stock: number
           avg_unit_cost: number
           total_cost_value: number
+          note: string | null
           created_at: string
           updated_at: string
         }
@@ -117,6 +118,7 @@ export interface Database {
           product_name: string
           color?: string | null
           ip_category?: string | null
+          note?: string | null
           size_stock?: SizeQuantities
           total_stock?: number
           avg_unit_cost?: number
@@ -134,6 +136,7 @@ export interface Database {
           total_stock?: number
           avg_unit_cost?: number
           total_cost_value?: number
+          note?: string | null
           created_at?: string
           updated_at?: string
         }

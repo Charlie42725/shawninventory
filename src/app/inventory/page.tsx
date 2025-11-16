@@ -505,6 +505,9 @@ function InventoryTable({
             <th className="px-3 sm:px-6 py-2 sm:py-3 text-center text-xs font-medium text-gray-500 dark:text-gray-400 uppercase tracking-wider hidden sm:table-cell">
               總成本價值
             </th>
+            <th className="px-3 sm:px-6 py-2 sm:py-3 text-left text-xs font-medium text-gray-500 dark:text-gray-400 uppercase tracking-wider hidden lg:table-cell">
+              備註
+            </th>
             <th className="px-3 sm:px-6 py-2 sm:py-3 text-center text-xs font-medium text-gray-500 dark:text-gray-400 uppercase tracking-wider">
               操作
             </th>
@@ -557,6 +560,11 @@ function InventoryTable({
               </td>
               <td className="px-3 sm:px-6 py-3 sm:py-4 whitespace-nowrap text-center text-xs sm:text-sm font-medium text-gray-900 dark:text-gray-100 hidden sm:table-cell">
                 ${product.total_cost_value.toFixed(2)}
+              </td>
+              <td className="px-3 sm:px-6 py-3 sm:py-4 text-xs sm:text-sm text-gray-600 dark:text-gray-400 max-w-xs hidden lg:table-cell">
+                <div className="truncate" title={product.note || ''}>
+                  {product.note || '-'}
+                </div>
               </td>
               <td className="px-3 sm:px-6 py-3 sm:py-4 whitespace-nowrap text-center text-xs sm:text-sm font-medium">
                 <button
@@ -1374,7 +1382,8 @@ function EditProductModal({
     product_name: product.product_name,
     color: product.color || '',
     ip_category: product.ip_category || '',
-    size_stock: { ...product.size_stock }
+    size_stock: { ...product.size_stock },
+    note: product.note || ''
   })
   const [loading, setLoading] = useState(false)
 
@@ -1514,6 +1523,18 @@ function EditProductModal({
               </p>
             </div>
           )}
+
+          {/* 備註欄位 */}
+          <div>
+            <label className="block text-sm font-medium text-gray-900 dark:text-gray-100 mb-1">備註</label>
+            <textarea
+              rows={2}
+              value={formData.note}
+              onChange={e => setFormData({...formData, note: e.target.value})}
+              className="w-full px-3 py-2 border border-gray-300 dark:border-gray-600 rounded-md focus:outline-none focus:ring-2 focus:ring-indigo-500 text-gray-900 dark:text-gray-100 bg-white dark:bg-gray-700 transition-colors placeholder:text-gray-400 dark:placeholder:text-gray-500"
+              placeholder="產品備註資訊..."
+            />
+          </div>
 
           <div className="flex flex-col sm:flex-row gap-3 pt-4">
             <button
