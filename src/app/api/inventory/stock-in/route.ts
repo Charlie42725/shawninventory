@@ -106,3 +106,214 @@ export async function POST(request: Request) {
     )
   }
 }
+
+// DELETE - 刪除進貨記錄並回退庫存
+export async function DELETE(request: Request) {
+  try {
+    const { searchParams } = new URL(request.url)
+    const id = searchParams.get('id')
+
+    if (!id) {
+      return NextResponse.json(
+        { error: '缺少進貨記錄 ID' },
+        { status: 400 }
+      )
+    }
+
+    // 1. 查詢進貨記錄
+    const { data: stockInRecord, error: fetchError } = await supabaseAdmin
+      .from('stock_in')
+      .select('*')
+      .eq('id', parseInt(id))
+      .single()
+
+    if (fetchError || !stockInRecord) {
+      return NextResponse.json(
+        { error: '找不到進貨記錄' },
+        { status: 404 }
+      )
+    }
+
+    // 2. 查詢對應的產品
+    const { data: product, error: productError } = await supabaseAdmin
+      .from('products')
+      .select('*')
+      .eq('category_id', stockInRecord.category_id)
+      .eq('product_name', stockInRecord.product_name)
+      .eq('color', stockInRecord.color || null)
+      .single()
+
+    if (productError || !product) {
+      return NextResponse.json(
+        { error: '找不到對應的產品' },
+        { status: 404 }
+      )
+    }
+
+    // 3. 計算回退後的庫存
+    const sizeQuantities = stockInRecord.size_quantities as SizeQuantities || {}
+    const currentSizeStock = product.size_stock as Record<string, number> || {}
+    const newSizeStock = { ...currentSizeStock }
+
+    // 扣減各尺寸的庫存
+    for (const [size, qty] of Object.entries(sizeQuantities)) {
+      const currentQty = currentSizeStock[size] || 0
+      const decreaseQty = qty as number
+
+      if (currentQty < decreaseQty) {
+        return NextResponse.json(
+          { error: `無法刪除: ${size} 的庫存不足 (當前: ${currentQty}, 需要: ${decreaseQty})` },
+          { status: 400 }
+        )
+      }
+
+      newSizeStock[size] = currentQty - decreaseQty
+
+      // 如果庫存為 0,移除該尺寸
+      if (newSizeStock[size] === 0) {
+        delete newSizeStock[size]
+      }
+    }
+
+    // 4. 計算新的總庫存和成本
+    const newTotalStock = product.total_stock - stockInRecord.total_quantity
+
+    if (newTotalStock < 0) {
+      return NextResponse.json(
+        { error: `無法刪除: 總庫存不足` },
+        { status: 400 }
+      )
+    }
+
+    // 計算新的成本價值(扣除這次進貨的成本)
+    const newTotalCostValue = product.total_cost_value - stockInRecord.total_cost
+
+    // 計算新的平均成本
+    const newAvgUnitCost = newTotalStock > 0
+      ? newTotalCostValue / newTotalStock
+      : 0
+
+    // 5. 更新產品庫存
+    const { error: updateError } = await supabaseAdmin
+      .from('products')
+      .update({
+        size_stock: newSizeStock,
+        total_stock: newTotalStock,
+        avg_unit_cost: newAvgUnitCost,
+        total_cost_value: newTotalCostValue,
+        updated_at: new Date().toISOString(),
+      })
+      .eq('id', product.id)
+
+    if (updateError) {
+      throw updateError
+    }
+
+    // 6. 記錄庫存異動
+    await supabaseAdmin
+      .from('inventory_movements')
+      .insert({
+        product_id: product.id,
+        movement_type: 'adjustment',
+        size: null,
+        quantity: -stockInRecord.total_quantity,
+        previous_total: product.total_stock,
+        current_total: newTotalStock,
+        reference_type: 'stock_in_deletion',
+        reference_id: parseInt(id),
+        note: `刪除進貨記錄 #${id}: ${stockInRecord.product_name}`,
+      })
+
+    // 7. 刪除進貨記錄
+    const { error: deleteError } = await supabaseAdmin
+      .from('stock_in')
+      .delete()
+      .eq('id', parseInt(id))
+
+    if (deleteError) {
+      throw deleteError
+    }
+
+    return NextResponse.json({
+      success: true,
+      message: `已刪除進貨記錄並回退庫存: ${stockInRecord.product_name} x ${stockInRecord.total_quantity}`,
+    })
+
+  } catch (error: any) {
+    console.error('Error deleting stock-in:', error)
+    return NextResponse.json(
+      { error: error.message || 'Failed to delete stock-in' },
+      { status: 500 }
+    )
+  }
+}
+
+// PUT - 更新進貨記錄
+export async function PUT(request: Request) {
+  try {
+    const { searchParams } = new URL(request.url)
+    const id = searchParams.get('id')
+
+    if (!id) {
+      return NextResponse.json(
+        { error: '缺少進貨記錄 ID' },
+        { status: 400 }
+      )
+    }
+
+    const body = await request.json()
+    const {
+      date,
+      order_type,
+      unit_cost,
+      note,
+    } = body
+
+    // 只允許更新部分欄位(日期、類型、單價、備註)
+    // 不允許更改產品、數量等核心欄位(需要先刪除再新增)
+    const updateData: any = {}
+
+    if (date) updateData.date = date
+    if (order_type) updateData.order_type = order_type
+    if (note !== undefined) updateData.note = note
+
+    // 如果要更新單價,需要重新計算總成本
+    if (unit_cost !== undefined) {
+      // 先查詢進貨記錄獲取總數量
+      const { data: stockInRecord } = await supabaseAdmin
+        .from('stock_in')
+        .select('total_quantity')
+        .eq('id', parseInt(id))
+        .single()
+
+      if (stockInRecord) {
+        updateData.unit_cost = parseFloat(unit_cost)
+        updateData.total_cost = parseFloat(unit_cost) * stockInRecord.total_quantity
+      }
+    }
+
+    const { data, error } = await supabaseAdmin
+      .from('stock_in')
+      .update(updateData)
+      .eq('id', parseInt(id))
+      .select()
+      .single()
+
+    if (error) {
+      throw error
+    }
+
+    return NextResponse.json({
+      success: true,
+      data,
+      message: '進貨記錄已更新',
+    })
+
+  } catch (error: any) {
+    console.error('Error updating stock-in:', error)
+    return NextResponse.json(
+      { error: error.message || 'Failed to update stock-in' },
+      { status: 500 }
+    )
+  }
+}

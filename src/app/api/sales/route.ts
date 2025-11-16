@@ -198,3 +198,77 @@ export async function DELETE(request: Request) {
     )
   }
 }
+
+// PUT - 更新銷售記錄
+export async function PUT(request: Request) {
+  try {
+    const { searchParams } = new URL(request.url)
+    const id = searchParams.get('id')
+
+    if (!id) {
+      return NextResponse.json(
+        { error: '缺少銷售記錄 ID' },
+        { status: 400 }
+      )
+    }
+
+    const body = await request.json()
+    const {
+      date,
+      customer_type,
+      channel,
+      shipping_method,
+      unit_price,
+      note,
+    } = body
+
+    // 只允許更新部分欄位(日期、客戶類型、通路、運送方式、單價、備註)
+    // 不允許更改產品、尺寸、數量等核心欄位(需要先刪除再新增)
+    const updateData: any = {}
+
+    if (date) updateData.date = date
+    if (customer_type) updateData.customer_type = customer_type
+    if (channel !== undefined) updateData.channel = channel
+    if (shipping_method !== undefined) updateData.shipping_method = shipping_method
+    if (note !== undefined) updateData.note = note
+
+    // 如果要更新單價,需要重新計算總金額
+    if (unit_price !== undefined) {
+      // 先查詢銷售記錄獲取數量
+      const { data: saleRecord } = await supabaseAdmin
+        .from('sales')
+        .select('quantity')
+        .eq('id', parseInt(id))
+        .single()
+
+      if (saleRecord) {
+        updateData.unit_price = parseFloat(unit_price)
+        updateData.total_amount = parseFloat(unit_price) * saleRecord.quantity
+      }
+    }
+
+    const { data, error } = await supabaseAdmin
+      .from('sales')
+      .update(updateData)
+      .eq('id', parseInt(id))
+      .select()
+      .single()
+
+    if (error) {
+      throw error
+    }
+
+    return NextResponse.json({
+      success: true,
+      data,
+      message: '銷售記錄已更新',
+    })
+
+  } catch (error: any) {
+    console.error('Error updating sale:', error)
+    return NextResponse.json(
+      { error: error.message || 'Failed to update sale' },
+      { status: 500 }
+    )
+  }
+}

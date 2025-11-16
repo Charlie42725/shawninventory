@@ -51,18 +51,18 @@ export default function InsightsPage() {
       <div className="space-y-4 sm:space-y-6 px-2 sm:px-0">
         {/* 標題 */}
         <div className="flex flex-col space-y-2">
-          <h1 className="text-2xl sm:text-3xl font-bold text-gray-900">🤖 AI 財務分析洞察</h1>
-          <p className="text-sm sm:text-base text-gray-600">使用 Google Gemini AI 深度分析您的財務數據,獲取專業建議</p>
+          <h1 className="text-2xl sm:text-3xl font-bold text-gray-900 dark:text-gray-100">🤖 AI 財務分析洞察</h1>
+          <p className="text-sm sm:text-base text-gray-600 dark:text-gray-400">使用 Google Gemini AI 深度分析您的財務數據,獲取專業建議</p>
         </div>
 
         {/* 操作區域 */}
-        <div className="bg-white rounded-lg shadow-sm p-4 sm:p-6">
-          <h2 className="text-base sm:text-lg font-medium text-gray-900 mb-3 sm:mb-4">分析設定</h2>
+        <div className="bg-white dark:bg-gray-800 rounded-lg shadow-sm p-4 sm:p-6 transition-colors">
+          <h2 className="text-base sm:text-lg font-medium text-gray-900 dark:text-gray-100 mb-3 sm:mb-4">分析設定</h2>
 
           <div className="space-y-3 sm:space-y-4">
             {/* 日期範圍模式選擇 */}
             <div>
-              <label className="block text-sm font-medium text-gray-700 mb-2">
+              <label className="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-2">
                 選擇分析期間
               </label>
               <div className="flex gap-2">
@@ -71,7 +71,7 @@ export default function InsightsPage() {
                   className={`flex-1 sm:flex-none px-3 sm:px-4 py-2 rounded-md text-sm font-medium transition-colors ${
                     !useCustomRange
                       ? 'bg-indigo-600 text-white'
-                      : 'bg-gray-200 text-gray-700 hover:bg-gray-300'
+                      : 'bg-gray-200 dark:bg-gray-700 text-gray-700 dark:text-gray-300 hover:bg-gray-300 dark:hover:bg-gray-600'
                   }`}
                 >
                   預設區間
@@ -81,7 +81,7 @@ export default function InsightsPage() {
                   className={`flex-1 sm:flex-none px-3 sm:px-4 py-2 rounded-md text-sm font-medium transition-colors ${
                     useCustomRange
                       ? 'bg-indigo-600 text-white'
-                      : 'bg-gray-200 text-gray-700 hover:bg-gray-300'
+                      : 'bg-gray-200 dark:bg-gray-700 text-gray-700 dark:text-gray-300 hover:bg-gray-300 dark:hover:bg-gray-600'
                   }`}
                 >
                   自定義區間
@@ -92,13 +92,13 @@ export default function InsightsPage() {
             {/* 預設日期區間 */}
             {!useCustomRange && (
               <div>
-                <label className="block text-sm font-medium text-gray-700 mb-2">
+                <label className="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-2">
                   日期範圍
                 </label>
                 <select
                   value={dateRange}
                   onChange={(e) => setDateRange(e.target.value)}
-                  className="w-full px-3 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-indigo-500 focus:border-indigo-500 text-gray-900"
+                  className="w-full px-3 py-2 border border-gray-300 dark:border-gray-600 rounded-md focus:outline-none focus:ring-indigo-500 focus:border-indigo-500 text-gray-900 dark:text-gray-100 bg-white dark:bg-gray-700 transition-colors"
                 >
                   <option value="week">最近一週</option>
                   <option value="month">最近一個月</option>
@@ -112,25 +112,25 @@ export default function InsightsPage() {
             {useCustomRange && (
               <div className="grid grid-cols-1 sm:grid-cols-2 gap-3 sm:gap-4">
                 <div>
-                  <label className="block text-sm font-medium text-gray-700 mb-2">
+                  <label className="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-2">
                     開始日期
                   </label>
                   <input
                     type="date"
                     value={startDate}
                     onChange={(e) => setStartDate(e.target.value)}
-                    className="w-full px-3 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-indigo-500 focus:border-indigo-500 text-gray-900 text-sm sm:text-base"
+                    className="w-full px-3 py-2 border border-gray-300 dark:border-gray-600 rounded-md focus:outline-none focus:ring-indigo-500 focus:border-indigo-500 text-gray-900 dark:text-gray-100 bg-white dark:bg-gray-700 text-sm sm:text-base transition-colors"
                   />
                 </div>
                 <div>
-                  <label className="block text-sm font-medium text-gray-700 mb-2">
+                  <label className="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-2">
                     結束日期
                   </label>
                   <input
                     type="date"
                     value={endDate}
                     onChange={(e) => setEndDate(e.target.value)}
-                    className="w-full px-3 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-indigo-500 focus:border-indigo-500 text-gray-900 text-sm sm:text-base"
+                    className="w-full px-3 py-2 border border-gray-300 dark:border-gray-600 rounded-md focus:outline-none focus:ring-indigo-500 focus:border-indigo-500 text-gray-900 dark:text-gray-100 bg-white dark:bg-gray-700 text-sm sm:text-base transition-colors"
                   />
                 </div>
               </div>
@@ -159,10 +159,10 @@ export default function InsightsPage() {
 
         {/* 錯誤訊息 */}
         {error && (
-          <div className="bg-red-50 border border-red-200 rounded-lg p-3 sm:p-4">
+          <div className="bg-red-50 dark:bg-red-900/20 border border-red-200 dark:border-red-800 rounded-lg p-3 sm:p-4 transition-colors">
             <div className="flex items-start sm:items-center">
-              <span className="text-red-600 text-base sm:text-lg mr-2 flex-shrink-0">⚠️</span>
-              <p className="text-sm sm:text-base text-red-800 break-words">{error}</p>
+              <span className="text-red-600 dark:text-red-400 text-base sm:text-lg mr-2 flex-shrink-0">⚠️</span>
+              <p className="text-sm sm:text-base text-red-800 dark:text-red-300 break-words">{error}</p>
             </div>
           </div>
         )}
@@ -171,13 +171,13 @@ export default function InsightsPage() {
         {result && (
           <div className="space-y-4 sm:space-y-6">
             {/* AI 分析總結 */}
-            <div className="bg-gradient-to-br from-indigo-50 to-purple-50 border border-indigo-200 rounded-lg p-4 sm:p-6">
-              <h2 className="text-lg sm:text-xl font-bold text-indigo-900 mb-3 sm:mb-4 flex items-center">
+            <div className="bg-gradient-to-br from-indigo-50 to-purple-50 dark:from-indigo-900/20 dark:to-purple-900/20 border border-indigo-200 dark:border-indigo-800 rounded-lg p-4 sm:p-6 transition-colors">
+              <h2 className="text-lg sm:text-xl font-bold text-indigo-900 dark:text-indigo-300 mb-3 sm:mb-4 flex items-center">
                 <span className="text-xl sm:text-2xl mr-2">🤖</span>
                 AI 深度分析
               </h2>
               <div className="prose prose-indigo max-w-none">
-                <div className="text-sm sm:text-base text-gray-800 whitespace-pre-wrap leading-relaxed">
+                <div className="text-sm sm:text-base text-gray-800 dark:text-gray-200 whitespace-pre-wrap leading-relaxed">
                   {result.analysis}
                 </div>
               </div>
@@ -185,16 +185,16 @@ export default function InsightsPage() {
 
             {/* 建議事項 */}
             {result.recommendations && result.recommendations.length > 0 && (
-              <div className="bg-green-50 border border-green-200 rounded-lg p-4 sm:p-6">
-                <h3 className="text-base sm:text-lg font-bold text-green-900 mb-3 sm:mb-4 flex items-center">
+              <div className="bg-green-50 dark:bg-green-900/20 border border-green-200 dark:border-green-800 rounded-lg p-4 sm:p-6 transition-colors">
+                <h3 className="text-base sm:text-lg font-bold text-green-900 dark:text-green-300 mb-3 sm:mb-4 flex items-center">
                   <span className="text-lg sm:text-xl mr-2">✅</span>
                   行動建議
                 </h3>
                 <ul className="space-y-2 sm:space-y-3">
                   {result.recommendations.map((rec, index) => (
                     <li key={index} className="flex items-start">
-                      <span className="text-green-600 mr-2 mt-1 flex-shrink-0">•</span>
-                      <span className="text-sm sm:text-base text-gray-800">{rec}</span>
+                      <span className="text-green-600 dark:text-green-400 mr-2 mt-1 flex-shrink-0">•</span>
+                      <span className="text-sm sm:text-base text-gray-800 dark:text-gray-200">{rec}</span>
                     </li>
                   ))}
                 </ul>
@@ -203,16 +203,16 @@ export default function InsightsPage() {
 
             {/* 風險警示 */}
             {result.risks && result.risks.length > 0 && (
-              <div className="bg-red-50 border border-red-200 rounded-lg p-4 sm:p-6">
-                <h3 className="text-base sm:text-lg font-bold text-red-900 mb-3 sm:mb-4 flex items-center">
+              <div className="bg-red-50 dark:bg-red-900/20 border border-red-200 dark:border-red-800 rounded-lg p-4 sm:p-6 transition-colors">
+                <h3 className="text-base sm:text-lg font-bold text-red-900 dark:text-red-300 mb-3 sm:mb-4 flex items-center">
                   <span className="text-lg sm:text-xl mr-2">⚠️</span>
                   風險警示
                 </h3>
                 <ul className="space-y-2 sm:space-y-3">
                   {result.risks.map((risk, index) => (
                     <li key={index} className="flex items-start">
-                      <span className="text-red-600 mr-2 mt-1 flex-shrink-0">•</span>
-                      <span className="text-sm sm:text-base text-gray-800">{risk}</span>
+                      <span className="text-red-600 dark:text-red-400 mr-2 mt-1 flex-shrink-0">•</span>
+                      <span className="text-sm sm:text-base text-gray-800 dark:text-gray-200">{risk}</span>
                     </li>
                   ))}
                 </ul>
@@ -221,16 +221,16 @@ export default function InsightsPage() {
 
             {/* 成長機會 */}
             {result.opportunities && result.opportunities.length > 0 && (
-              <div className="bg-blue-50 border border-blue-200 rounded-lg p-4 sm:p-6">
-                <h3 className="text-base sm:text-lg font-bold text-blue-900 mb-3 sm:mb-4 flex items-center">
+              <div className="bg-blue-50 dark:bg-blue-900/20 border border-blue-200 dark:border-blue-800 rounded-lg p-4 sm:p-6 transition-colors">
+                <h3 className="text-base sm:text-lg font-bold text-blue-900 dark:text-blue-300 mb-3 sm:mb-4 flex items-center">
                   <span className="text-lg sm:text-xl mr-2">🚀</span>
                   成長機會
                 </h3>
                 <ul className="space-y-2 sm:space-y-3">
                   {result.opportunities.map((opp, index) => (
                     <li key={index} className="flex items-start">
-                      <span className="text-blue-600 mr-2 mt-1 flex-shrink-0">•</span>
-                      <span className="text-sm sm:text-base text-gray-800">{opp}</span>
+                      <span className="text-blue-600 dark:text-blue-400 mr-2 mt-1 flex-shrink-0">•</span>
+                      <span className="text-sm sm:text-base text-gray-800 dark:text-gray-200">{opp}</span>
                     </li>
                   ))}
                 </ul>
@@ -241,9 +241,9 @@ export default function InsightsPage() {
 
         {/* 使用說明 */}
         {!result && !analyzing && (
-          <div className="bg-gray-50 border border-gray-200 rounded-lg p-4 sm:p-6">
-            <h3 className="text-base sm:text-lg font-medium text-gray-900 mb-3">💡 使用說明</h3>
-            <ul className="space-y-2 text-sm sm:text-base text-gray-700">
+          <div className="bg-gray-50 dark:bg-gray-800 border border-gray-200 dark:border-gray-700 rounded-lg p-4 sm:p-6 transition-colors">
+            <h3 className="text-base sm:text-lg font-medium text-gray-900 dark:text-gray-100 mb-3">💡 使用說明</h3>
+            <ul className="space-y-2 text-sm sm:text-base text-gray-700 dark:text-gray-300">
               <li className="flex items-start">
                 <span className="text-indigo-600 mr-2 font-medium flex-shrink-0">1.</span>
                 <span>選擇要分析的日期範圍</span>

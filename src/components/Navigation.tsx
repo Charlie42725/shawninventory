@@ -4,6 +4,7 @@ import { useState } from 'react'
 import Link from 'next/link'
 import { usePathname, useRouter } from 'next/navigation'
 import { useAuth } from '@/contexts/AuthContext'
+import { useTheme } from '@/contexts/ThemeContext'
 
 const navigation = [
   { name: '庫存管理', href: '/inventory', icon: '📦' },
@@ -17,6 +18,8 @@ export default function Navigation() {
   const pathname = usePathname()
   const router = useRouter()
   const { user, signOut } = useAuth()
+  const { theme, toggleTheme } = useTheme()
+  const [mobileMenuOpen, setMobileMenuOpen] = useState(false)
 
   const handleSignOut = async () => {
     await signOut()
@@ -27,10 +30,8 @@ export default function Navigation() {
     return null
   }
 
-  const [mobileMenuOpen, setMobileMenuOpen] = useState(false)
-
   return (
-    <nav className="bg-gray-800 shadow-sm sticky top-0 z-50">
+    <nav className="bg-gray-800 dark:bg-gray-950 shadow-sm sticky top-0 z-50 transition-colors">
       <div className="mx-auto max-w-7xl px-4 sm:px-6 lg:px-8">
         <div className="flex h-16 justify-between items-center">
           {/* Logo */}
@@ -50,8 +51,8 @@ export default function Navigation() {
                   href={item.href}
                   className={`${
                     isActive
-                      ? 'bg-gray-900 text-white'
-                      : 'text-gray-300 hover:bg-gray-700 hover:text-white'
+                      ? 'bg-gray-900 dark:bg-gray-800 text-white'
+                      : 'text-gray-300 dark:text-gray-400 hover:bg-gray-700 dark:hover:bg-gray-800 hover:text-white'
                   } px-3 py-2 rounded-md text-sm font-medium inline-flex items-center transition-colors whitespace-nowrap`}
                 >
                   <span className="mr-1.5">{item.icon}</span>
@@ -63,12 +64,20 @@ export default function Navigation() {
 
           {/* Desktop User Menu */}
           <div className="hidden lg:flex lg:items-center lg:space-x-3">
-            <span className="text-gray-300 text-sm truncate max-w-[150px]" title={user.email}>
+            {/* Theme Toggle Button */}
+            <button
+              onClick={toggleTheme}
+              className="p-2 rounded-md text-gray-300 dark:text-gray-400 hover:bg-gray-700 dark:hover:bg-gray-800 hover:text-white transition-colors"
+              title={theme === 'light' ? '切換至深色模式' : '切換至淺色模式'}
+            >
+              {theme === 'light' ? '🌙' : '☀️'}
+            </button>
+            <span className="text-gray-300 dark:text-gray-400 text-sm truncate max-w-[150px]" title={user.email}>
               {user.email}
             </span>
             <button
               onClick={handleSignOut}
-              className="bg-gray-700 hover:bg-gray-600 text-white px-3 py-2 rounded-md text-sm font-medium transition-colors"
+              className="bg-gray-700 dark:bg-gray-800 hover:bg-gray-600 dark:hover:bg-gray-700 text-white px-3 py-2 rounded-md text-sm font-medium transition-colors"
             >
               登出
             </button>
@@ -95,7 +104,7 @@ export default function Navigation() {
 
       {/* Mobile menu */}
       {mobileMenuOpen && (
-        <div className="lg:hidden border-t border-gray-700">
+        <div className="lg:hidden border-t border-gray-700 dark:border-gray-800">
           <div className="px-2 pt-2 pb-3 space-y-1">
             {navigation.map((item) => {
               const isActive = pathname === item.href
@@ -106,9 +115,9 @@ export default function Navigation() {
                   onClick={() => setMobileMenuOpen(false)}
                   className={`${
                     isActive
-                      ? 'bg-gray-900 text-white'
-                      : 'text-gray-300 hover:bg-gray-700 hover:text-white'
-                  } block px-3 py-2 rounded-md text-base font-medium`}
+                      ? 'bg-gray-900 dark:bg-gray-800 text-white'
+                      : 'text-gray-300 dark:text-gray-400 hover:bg-gray-700 dark:hover:bg-gray-800 hover:text-white'
+                  } block px-3 py-2 rounded-md text-base font-medium transition-colors`}
                 >
                   <span className="mr-2">{item.icon}</span>
                   {item.name}
@@ -116,17 +125,26 @@ export default function Navigation() {
               )
             })}
           </div>
-          <div className="border-t border-gray-700 px-4 py-3">
-            <div className="text-gray-400 text-sm mb-2 truncate">{user.email}</div>
-            <button
-              onClick={() => {
-                handleSignOut()
-                setMobileMenuOpen(false)
-              }}
-              className="w-full bg-gray-700 hover:bg-gray-600 text-white px-3 py-2 rounded-md text-sm font-medium text-center"
-            >
-              登出
-            </button>
+          <div className="border-t border-gray-700 dark:border-gray-800 px-4 py-3">
+            <div className="text-gray-400 dark:text-gray-500 text-sm mb-2 truncate">{user.email}</div>
+            <div className="flex gap-2">
+              <button
+                onClick={toggleTheme}
+                className="flex-shrink-0 bg-gray-700 dark:bg-gray-800 hover:bg-gray-600 dark:hover:bg-gray-700 text-white px-3 py-2 rounded-md text-sm font-medium text-center transition-colors"
+                title={theme === 'light' ? '切換至深色模式' : '切換至淺色模式'}
+              >
+                {theme === 'light' ? '🌙' : '☀️'}
+              </button>
+              <button
+                onClick={() => {
+                  handleSignOut()
+                  setMobileMenuOpen(false)
+                }}
+                className="flex-1 bg-gray-700 dark:bg-gray-800 hover:bg-gray-600 dark:hover:bg-gray-700 text-white px-3 py-2 rounded-md text-sm font-medium text-center transition-colors"
+              >
+                登出
+              </button>
+            </div>
           </div>
         </div>
       )}
