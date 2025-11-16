@@ -189,3 +189,128 @@
   syscall: 'open',
   path: 'C:\\Users\\linei\\Desktop\\coding\\inventory\\.next\\static\\development\\_buildManifest.js.tmp.tog7jcqc57b'
 }
+ ✓ Compiled / in 99ms
+ GET / 200 in 580ms
+ ○ Compiling /inventory ...
+ ✓ Compiled /inventory in 820ms
+ GET /inventory 200 in 957ms
+ ○ Compiling /api/categories ...
+ ✓ Compiled /api/categories in 986ms
+ GET /api/inventory 200 in 1712ms
+ GET /api/categories 200 in 1748ms
+ GET /api/inventory/stock-in 200 in 1763ms
+ GET /api/inventory/movements?limit=50 200 in 1904ms
+ ⨯ [Error: ENOENT: no such file or directory, open 'C:\Users\linei\Desktop\coding\inventory\.next\server\app\_not-found\page\app-build-manifest.json'] {
+  errno: -4058,
+  code: 'ENOENT',
+  syscall: 'open',
+  path: 'C:\\Users\\linei\\Desktop\\coding\\inventory\\.next\\server\\app\\_not-found\\page\\app-build-manifest.json'
+}
+ ⨯ [Error: ENOENT: no such file or directory, open 'C:\Users\linei\Desktop\coding\inventory\.next\server\pages\_app\build-manifest.json'] {
+  errno: -4058,
+  code: 'ENOENT',
+  syscall: 'open',
+  path: 'C:\\Users\\linei\\Desktop\\coding\\inventory\\.next\\server\\pages\\_app\\build-manifest.json'
+}
+ ⨯ [Error: ENOENT: no such file or directory, open 'C:\Users\linei\Desktop\coding\inventory\.next\server\app\_not-found\page\app-build-manifest.json'] {
+  errno: -4058,
+  code: 'ENOENT',
+  syscall: 'open',
+  path: 'C:\\Users\\linei\\Desktop\\coding\\inventory\\.next\\server\\app\\_not-found\\page\\app-build-manifest.json'
+}
+ ⨯ [Error: ENOENT: no such file or directory, open 'C:\Users\linei\Desktop\coding\inventory\.next\server\pages\_app\build-manifest.json'] {
+  errno: -4058,
+  code: 'ENOENT',
+  syscall: 'open',
+  path: 'C:\\Users\\linei\\Desktop\\coding\\inventory\\.next\\server\\pages\\_app\\build-manifest.json'
+}
+ ⨯ [Error: ENOENT: no such file or directory, open 'C:\Users\linei\Desktop\coding\inventory\.next\server\pages\_app\build-manifest.json'] {
+  errno: -4058,
+  code: 'ENOENT',
+  syscall: 'open',
+  path: 'C:\\Users\\linei\\Desktop\\coding\\inventory\\.next\\server\\pages\\_app\\build-manifest.json'
+}
+[Error: ENOENT: no such file or directory, open 'C:\Users\linei\Desktop\coding\inventory\.next\server\pages\_app\build-manifest.json'] {
+  errno: -4058,
+  code: 'ENOENT',
+  syscall: 'open',
+  path: 'C:\\Users\\linei\\Desktop\\coding\\inventory\\.next\\server\\pages\\_app\\build-manifest.json'
+}
+ ⨯ [Error: ENOENT: no such file or directory, open 'C:\Users\linei\Desktop\coding\inventory\.next\server\app\_not-found\page\app-build-manifest.json'] {
+  errno: -4058,
+  code: 'ENOENT',
+  syscall: 'open',
+  path: 'C:\\Users\\linei\\Desktop\\coding\\inventory\\.next\\server\\app\\_not-found\\page\\app-build-manifest.json'
+}
+ ⨯ [Error: ENOENT: no such file or directory, open 'C:\Users\linei\Desktop\coding\inventory\.next\server\pages\_app\build-manifest.json'] {
+  errno: -4058,
+  code: 'ENOENT',
+  syscall: 'open',
+  path: 'C:\\Users\\linei\\Desktop\\coding\\inventory\\.next\\server\\pages\\_app\\build-manifest.json'
+}
+ ⨯ [Error: ENOENT: no such file or directory, open 'C:\Users\linei\Desktop\coding\inventory\.next\server\pages\_app\build-manifest.json'] {
+  errno: -4058,
+  code: 'ENOENT',
+  syscall: 'open',
+  path: 'C:\\Users\\linei\\Desktop\\coding\\inventory\\.next\\server\\pages\\_app\\build-manifest.json'
+}
+ ⨯ [Error: ENOENT: no such file or directory, open 'C:\Users\linei\Desktop\coding\inventory\.next\server\pages\_app\build-manifest.json'] {
+  errno: -4058,
+  code: 'ENOENT',
+  syscall: 'open',
+  path: 'C:\\Users\\linei\\Desktop\\coding\\inventory\\.next\\server\\pages\\_app\\build-manifest.json'
+}
+[Error: ENOENT: no such file or directory, open 'C:\Users\linei\Desktop\coding\inventory\.next\server\pages\_app\build-manifest.json'] {
+  errno: -4058,
+  code: 'ENOENT',
+  syscall: 'open',
+  path: 'C:\\Users\\linei\\Desktop\\coding\\inventory\\.next\\server\\pages\\_app\\build-manifest.json'
+}
+[Error: ENOENT: no such file or directory, open 'C:\Users\linei\Desktop\coding\inventory\.next\server\pages\_app\build-manifest.json'] {
+  errno: -4058,
+  code: 'ENOENT',
+  syscall: 'open',
+  path: 'C:\\Users\\linei\\Desktop\\coding\\inventory\\.next\\server\\pages\\_app\\build-manifest.json'
+}
+ GET /api/inventory 500 in 846ms
+ GET /api/inventory 500 in 187ms
+ ⨯ [Error: ENOENT: no such file or directory, open 'C:\Users\linei\Desktop\coding\inventory\.next\server\pages\_app\build-manifest.json'] {
+  errno: -4058,
+  code: 'ENOENT',
+  syscall: 'open',
+  path: 'C:\\Users\\linei\\Desktop\\coding\\inventory\\.next\\server\\pages\\_app\\build-manifest.json'
+}
+ ⨯ [Error: ENOENT: no such file or directory, open 'C:\Users\linei\Desktop\coding\inventory\.next\server\pages\_app\build-manifest.json'] {
+  errno: -4058,
+  code: 'ENOENT',
+  syscall: 'open',
+  path: 'C:\\Users\\linei\\Desktop\\coding\\inventory\\.next\\server\\pages\\_app\\build-manifest.json'
+}
+[Error: ENOENT: no such file or directory, open 'C:\Users\linei\Desktop\coding\inventory\.next\server\pages\_app\build-manifest.json'] {
+  errno: -4058,
+  code: 'ENOENT',
+  syscall: 'open',
+  path: 'C:\\Users\\linei\\Desktop\\coding\\inventory\\.next\\server\\pages\\_app\\build-manifest.json'
+}
+[Error: ENOENT: no such file or directory, open 'C:\Users\linei\Desktop\coding\inventory\.next\server\pages\_app\build-manifest.json'] {
+  errno: -4058,
+  code: 'ENOENT',
+  syscall: 'open',
+  path: 'C:\\Users\\linei\\Desktop\\coding\\inventory\\.next\\server\\pages\\_app\\build-manifest.json'
+}
+ GET /api/inventory/stock-in 500 in 978ms
+ GET /api/inventory/stock-in 500 in 167ms
+ ⨯ [Error: ENOENT: no such file or directory, open 'C:\Users\linei\Desktop\coding\inventory\.next\server\pages\_app\build-manifest.json'] {
+  errno: -4058,
+  code: 'ENOENT',
+  syscall: 'open',
+  path: 'C:\\Users\\linei\\Desktop\\coding\\inventory\\.next\\server\\pages\\_app\\build-manifest.json'
+}
+ GET /api/categories 500 in 1028ms
+ GET /api/categories 500 in 86ms
+[Error: ENOENT: no such file or directory, open 'C:\Users\linei\Desktop\coding\inventory\.next\server\pages\_app\build-manifest.json'] {
+  errno: -4058,
+  code: 'ENOENT',
+  syscall: 'open',
+  path: 'C:\\Users\\linei\\Desktop\\coding\\inventory\\.next\\server\\pages\\_app\\build-manifest.json'
+}

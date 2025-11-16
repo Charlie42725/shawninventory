@@ -1383,8 +1383,7 @@ function EditProductModal({
     product_name: product.product_name,
     color: product.color || '',
     ip_category: product.ip_category || '',
-    size_stock: { ...product.size_stock },
-    note: product.note || ''
+    size_stock: { ...product.size_stock }
   })
   const [loading, setLoading] = useState(false)
 
@@ -1525,17 +1524,18 @@ function EditProductModal({
             </div>
           )}
 
-          {/* 備註欄位 */}
-          <div>
-            <label className="block text-sm font-medium text-gray-900 dark:text-gray-100 mb-1">備註</label>
-            <textarea
-              rows={2}
-              value={formData.note}
-              onChange={e => setFormData({...formData, note: e.target.value})}
-              className="w-full px-3 py-2 border border-gray-300 dark:border-gray-600 rounded-md focus:outline-none focus:ring-2 focus:ring-indigo-500 text-gray-900 dark:text-gray-100 bg-white dark:bg-gray-700 transition-colors placeholder:text-gray-400 dark:placeholder:text-gray-500"
-              placeholder="產品備註資訊..."
-            />
-          </div>
+          {/* 備註欄位（唯讀，來自最新進貨記錄） */}
+          {product.note && (
+            <div>
+              <label className="block text-sm font-medium text-gray-900 dark:text-gray-100 mb-1">備註（來自最新進貨）</label>
+              <div className="w-full px-3 py-2 border border-gray-300 dark:border-gray-600 rounded-md bg-gray-50 dark:bg-gray-900 text-gray-700 dark:text-gray-300 text-sm">
+                {product.note}
+              </div>
+              <p className="text-xs text-gray-500 dark:text-gray-400 mt-1">
+                備註來自最新進貨記錄，如需修改請編輯進貨記錄
+              </p>
+            </div>
+          )}
 
           <div className="flex flex-col sm:flex-row gap-3 pt-4">
             <button
