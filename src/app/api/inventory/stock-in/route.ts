@@ -135,13 +135,20 @@ export async function DELETE(request: Request) {
     }
 
     // 2. 查詢對應的產品
-    const { data: product, error: productError } = await supabaseAdmin
+    let query = supabaseAdmin
       .from('products')
       .select('*')
       .eq('category_id', stockInRecord.category_id)
       .eq('product_name', stockInRecord.product_name)
-      .eq('color', stockInRecord.color || null)
-      .single()
+
+    // 處理 color 欄位 (可能是 null 或空字串)
+    if (stockInRecord.color) {
+      query = query.eq('color', stockInRecord.color)
+    } else {
+      query = query.is('color', null)
+    }
+
+    const { data: product, error: productError } = await query.single()
 
     if (productError || !product) {
       return NextResponse.json(
