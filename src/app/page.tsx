@@ -1,23 +1,31 @@
 'use client'
 
-import { useEffect } from 'react'
+import { useEffect, useState } from 'react'
 import { useRouter } from 'next/navigation'
 import { useAuth } from '@/contexts/AuthContext'
+import SplashScreen from '@/components/SplashScreen'
 
 export default function HomePage() {
   const router = useRouter()
   const { user, loading } = useAuth()
+  const [showSplash, setShowSplash] = useState(true)
 
   useEffect(() => {
-    if (!loading) {
+    if (!loading && !showSplash) {
       if (user) {
         router.push('/inventory')
       } else {
         router.push('/login')
       }
     }
-  }, [user, loading, router])
+  }, [user, loading, showSplash, router])
 
+  // 如果還在顯示 Splash Screen
+  if (showSplash) {
+    return <SplashScreen onFinish={() => setShowSplash(false)} />
+  }
+
+  // Splash 結束後的過渡畫面
   return (
     <div className="min-h-screen bg-gradient-to-br from-gray-50 to-gray-100 dark:from-gray-900 dark:to-gray-800 flex items-center justify-center transition-colors">
       <div className="text-center">
@@ -41,7 +49,7 @@ export default function HomePage() {
         </div>
 
         <p className="text-lg font-medium text-gray-900 dark:text-gray-100">庫存管理系統</p>
-        <p className="mt-2 text-sm text-gray-600 dark:text-gray-400">載入中,請稍候...</p>
+        <p className="mt-2 text-sm text-gray-600 dark:text-gray-400">正在進入系統...</p>
       </div>
     </div>
   )

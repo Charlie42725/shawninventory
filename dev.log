@@ -1,0 +1,20 @@
+
+> inventory-nextjs@0.1.0 dev
+> next dev --turbopack
+
+   ▲ Next.js 15.5.3 (Turbopack)
+   - Local:        http://localhost:3000
+   - Network:      http://172.20.16.1:3000
+   - Environments: .env.local
+
+ ✓ Starting...
+ ✓ Ready in 2.1s
+ ⚠ Webpack is configured while Turbopack is not, which may cause problems.
+ ⚠ See instructions if you need to configure Turbopack:
+  https://nextjs.org/docs/app/api-reference/next-config-js/turbopack
+
+ ○ Compiling / ...
+ ✓ Compiled / in 4.8s
+ GET / 200 in 5514ms
+ ✓ Compiled in 169ms
+ ✓ Compiled in 266ms
