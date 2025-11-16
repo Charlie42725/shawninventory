@@ -824,6 +824,8 @@ function StockInModal({
     note: ''
   })
   const [loading, setLoading] = useState(false)
+  const [costInputMode, setCostInputMode] = useState<'unit' | 'total'>('unit') // 'unit' = 單價, 'total' = 總成本
+  const [totalCostInput, setTotalCostInput] = useState('')
 
   const selectedCategory = categories.find(c => c.id === parseInt(formData.category_id || '0'))
   const availableSizes = selectedCategory?.size_config?.sizes || []
@@ -839,10 +841,31 @@ function StockInModal({
     }))
   }
 
+  const getTotalQuantity = () => {
+    return Object.values(formData.size_quantities).reduce((sum, qty) => sum + qty, 0)
+  }
+
   const calculateTotal = () => {
-    const totalQty = Object.values(formData.size_quantities).reduce((sum, qty) => sum + qty, 0)
+    const totalQty = getTotalQuantity()
     const unitCost = parseFloat(formData.unit_cost) || 0
     return (totalQty * unitCost).toFixed(2)
+  }
+
+  // 當輸入總成本時,自動計算單價
+  const handleTotalCostChange = (value: string) => {
+    setTotalCostInput(value)
+    const totalQty = getTotalQuantity()
+    if (totalQty > 0 && value) {
+      const totalCost = parseFloat(value)
+      const unitCost = (totalCost / totalQty).toFixed(2)
+      setFormData(prev => ({ ...prev, unit_cost: unitCost }))
+    }
+  }
+
+  // 當輸入單價時,同步清空總成本輸入
+  const handleUnitCostChange = (value: string) => {
+    setFormData(prev => ({ ...prev, unit_cost: value }))
+    setTotalCostInput('')
   }
 
   const handleSubmit = async (e: React.FormEvent) => {
@@ -996,17 +1019,70 @@ function StockInModal({
             </div>
           )}
 
-          <div>
-            <label className="block text-sm font-medium text-gray-900 dark:text-gray-100 mb-1">單價成本 ($) *</label>
-            <input
-              type="number"
-              step="0.01"
-              min="0"
-              value={formData.unit_cost}
-              onChange={e => setFormData({...formData, unit_cost: e.target.value})}
-              className="w-full px-3 py-2 border border-gray-300 dark:border-gray-600 rounded-md focus:outline-none focus:ring-2 focus:ring-indigo-500 text-gray-900 dark:text-gray-100 bg-white dark:bg-gray-700 transition-colors"
-              required
-            />
+          {/* 成本輸入區域 */}
+          <div className="space-y-3">
+            <div className="flex items-center justify-between">
+              <label className="block text-sm font-medium text-gray-900 dark:text-gray-100">成本 *</label>
+              <div className="flex gap-2">
+                <button
+                  type="button"
+                  onClick={() => setCostInputMode('unit')}
+                  className={`px-3 py-1 text-xs rounded-md transition-colors ${
+                    costInputMode === 'unit'
+                      ? 'bg-indigo-600 text-white'
+                      : 'bg-gray-200 dark:bg-gray-700 text-gray-700 dark:text-gray-300 hover:bg-gray-300 dark:hover:bg-gray-600'
+                  }`}
+                >
+                  輸入單價
+                </button>
+                <button
+                  type="button"
+                  onClick={() => setCostInputMode('total')}
+                  className={`px-3 py-1 text-xs rounded-md transition-colors ${
+                    costInputMode === 'total'
+                      ? 'bg-indigo-600 text-white'
+                      : 'bg-gray-200 dark:bg-gray-700 text-gray-700 dark:text-gray-300 hover:bg-gray-300 dark:hover:bg-gray-600'
+                  }`}
+                >
+                  輸入總成本
+                </button>
+              </div>
+            </div>
+
+            {costInputMode === 'unit' ? (
+              <div>
+                <label className="block text-xs font-medium text-gray-600 dark:text-gray-400 mb-1">單價 ($)</label>
+                <input
+                  type="number"
+                  step="0.01"
+                  min="0"
+                  value={formData.unit_cost}
+                  onChange={e => handleUnitCostChange(e.target.value)}
+                  className="w-full px-3 py-2 border border-gray-300 dark:border-gray-600 rounded-md focus:outline-none focus:ring-2 focus:ring-indigo-500 text-gray-900 dark:text-gray-100 bg-white dark:bg-gray-700 transition-colors"
+                  placeholder="每件商品的成本"
+                  required
+                />
+              </div>
+            ) : (
+              <div>
+                <label className="block text-xs font-medium text-gray-600 dark:text-gray-400 mb-1">總成本 ($)</label>
+                <input
+                  type="number"
+                  step="0.01"
+                  min="0"
+                  value={totalCostInput}
+                  onChange={e => handleTotalCostChange(e.target.value)}
+                  className="w-full px-3 py-2 border border-gray-300 dark:border-gray-600 rounded-md focus:outline-none focus:ring-2 focus:ring-indigo-500 text-gray-900 dark:text-gray-100 bg-white dark:bg-gray-700 transition-colors"
+                  placeholder="全部商品的總成本"
+                  required={costInputMode === 'total'}
+                />
+                {formData.unit_cost && (
+                  <p className="mt-1 text-xs text-gray-500 dark:text-gray-400">
+                    自動計算單價: ${formData.unit_cost}
+                  </p>
+                )}
+              </div>
+            )}
           </div>
 
           <div>
@@ -1067,10 +1143,28 @@ function EditStockInModal({
     note: record.note || ''
   })
   const [loading, setLoading] = useState(false)
+  const [costInputMode, setCostInputMode] = useState<'unit' | 'total'>('unit')
+  const [totalCostInput, setTotalCostInput] = useState('')
 
   const calculateTotal = () => {
     const unitCost = parseFloat(formData.unit_cost) || 0
     return (record.total_quantity * unitCost).toFixed(2)
+  }
+
+  // 當輸入總成本時,自動計算單價
+  const handleTotalCostChange = (value: string) => {
+    setTotalCostInput(value)
+    if (value) {
+      const totalCost = parseFloat(value)
+      const unitCost = (totalCost / record.total_quantity).toFixed(2)
+      setFormData(prev => ({ ...prev, unit_cost: unitCost }))
+    }
+  }
+
+  // 當輸入單價時,同步清空總成本輸入
+  const handleUnitCostChange = (value: string) => {
+    setFormData(prev => ({ ...prev, unit_cost: value }))
+    setTotalCostInput('')
   }
 
   const handleSubmit = async (e: React.FormEvent) => {
@@ -1159,17 +1253,70 @@ function EditStockInModal({
             </div>
           </div>
 
-          <div>
-            <label className="block text-sm font-medium text-gray-900 dark:text-gray-100 mb-1">單價成本 ($) *</label>
-            <input
-              type="number"
-              step="0.01"
-              min="0"
-              value={formData.unit_cost}
-              onChange={e => setFormData({...formData, unit_cost: e.target.value})}
-              className="w-full px-3 py-2 border border-gray-300 dark:border-gray-600 rounded-md focus:outline-none focus:ring-2 focus:ring-indigo-500 text-gray-900 dark:text-gray-100 bg-white dark:bg-gray-700 transition-colors"
-              required
-            />
+          {/* 成本輸入區域 */}
+          <div className="space-y-3">
+            <div className="flex items-center justify-between">
+              <label className="block text-sm font-medium text-gray-900 dark:text-gray-100">成本 *</label>
+              <div className="flex gap-2">
+                <button
+                  type="button"
+                  onClick={() => setCostInputMode('unit')}
+                  className={`px-3 py-1 text-xs rounded-md transition-colors ${
+                    costInputMode === 'unit'
+                      ? 'bg-indigo-600 text-white'
+                      : 'bg-gray-200 dark:bg-gray-700 text-gray-700 dark:text-gray-300 hover:bg-gray-300 dark:hover:bg-gray-600'
+                  }`}
+                >
+                  輸入單價
+                </button>
+                <button
+                  type="button"
+                  onClick={() => setCostInputMode('total')}
+                  className={`px-3 py-1 text-xs rounded-md transition-colors ${
+                    costInputMode === 'total'
+                      ? 'bg-indigo-600 text-white'
+                      : 'bg-gray-200 dark:bg-gray-700 text-gray-700 dark:text-gray-300 hover:bg-gray-300 dark:hover:bg-gray-600'
+                  }`}
+                >
+                  輸入總成本
+                </button>
+              </div>
+            </div>
+
+            {costInputMode === 'unit' ? (
+              <div>
+                <label className="block text-xs font-medium text-gray-600 dark:text-gray-400 mb-1">單價 ($)</label>
+                <input
+                  type="number"
+                  step="0.01"
+                  min="0"
+                  value={formData.unit_cost}
+                  onChange={e => handleUnitCostChange(e.target.value)}
+                  className="w-full px-3 py-2 border border-gray-300 dark:border-gray-600 rounded-md focus:outline-none focus:ring-2 focus:ring-indigo-500 text-gray-900 dark:text-gray-100 bg-white dark:bg-gray-700 transition-colors"
+                  placeholder="每件商品的成本"
+                  required
+                />
+              </div>
+            ) : (
+              <div>
+                <label className="block text-xs font-medium text-gray-600 dark:text-gray-400 mb-1">總成本 ($)</label>
+                <input
+                  type="number"
+                  step="0.01"
+                  min="0"
+                  value={totalCostInput}
+                  onChange={e => handleTotalCostChange(e.target.value)}
+                  className="w-full px-3 py-2 border border-gray-300 dark:border-gray-600 rounded-md focus:outline-none focus:ring-2 focus:ring-indigo-500 text-gray-900 dark:text-gray-100 bg-white dark:bg-gray-700 transition-colors"
+                  placeholder="全部商品的總成本"
+                  required={costInputMode === 'total'}
+                />
+                {formData.unit_cost && (
+                  <p className="mt-1 text-xs text-gray-500 dark:text-gray-400">
+                    自動計算單價: ${formData.unit_cost}
+                  </p>
+                )}
+              </div>
+            )}
           </div>
 
           <div>
