@@ -274,69 +274,175 @@ export async function PUT(request: Request) {
       order_type,
       unit_cost,
       note,
+      size_quantities,
     } = body
 
-    // 只允許更新部分欄位(日期、類型、單價、備註)
-    // 不允許更改產品、數量等核心欄位(需要先刪除再新增)
+    // 1. 先查詢進貨記錄獲取完整資訊
+    const { data: stockInRecord, error: fetchError } = await supabaseAdmin
+      .from('stock_in')
+      .select('*')
+      .eq('id', parseInt(id))
+      .single()
+
+    if (fetchError || !stockInRecord) {
+      return NextResponse.json(
+        { error: '找不到進貨記錄' },
+        { status: 404 }
+      )
+    }
+
     const updateData: any = {}
 
     if (date) updateData.date = date
     if (order_type) updateData.order_type = order_type
     if (note !== undefined) updateData.note = note
 
-    // 如果要更新單價,需要重新計算總成本並更新產品的平均成本
-    if (unit_cost !== undefined) {
-      // 1. 先查詢進貨記錄獲取完整資訊
-      const { data: stockInRecord } = await supabaseAdmin
-        .from('stock_in')
-        .select('*')
-        .eq('id', parseInt(id))
-        .single()
+    // 2. 查詢對應的產品
+    let productQuery = supabaseAdmin
+      .from('products')
+      .select('*')
+      .eq('category_id', stockInRecord.category_id)
+      .eq('product_name', stockInRecord.product_name)
 
-      if (stockInRecord) {
-        const newUnitCost = parseFloat(unit_cost)
-        const oldUnitCost = stockInRecord.unit_cost
-        const newTotalCost = newUnitCost * stockInRecord.total_quantity
-        const oldTotalCost = stockInRecord.total_cost
+    // 處理 color 欄位
+    if (stockInRecord.color) {
+      productQuery = productQuery.eq('color', stockInRecord.color)
+    } else {
+      productQuery = productQuery.is('color', null)
+    }
 
-        updateData.unit_cost = newUnitCost
-        updateData.total_cost = newTotalCost
+    const { data: product } = await productQuery.single()
 
-        // 2. 查詢對應的產品
-        let productQuery = supabaseAdmin
-          .from('products')
-          .select('*')
-          .eq('category_id', stockInRecord.category_id)
-          .eq('product_name', stockInRecord.product_name)
+    if (!product) {
+      return NextResponse.json(
+        { error: '找不到對應的產品' },
+        { status: 404 }
+      )
+    }
 
-        // 處理 color 欄位
-        if (stockInRecord.color) {
-          productQuery = productQuery.eq('color', stockInRecord.color)
-        } else {
-          productQuery = productQuery.is('color', null)
+    // 處理數量變更
+    let newTotalQuantity = stockInRecord.total_quantity
+    let quantityDifference = 0
+    const oldSizeQuantities = stockInRecord.size_quantities as SizeQuantities || {}
+
+    if (size_quantities) {
+      const newSizeQuantities = size_quantities as SizeQuantities
+      newTotalQuantity = calculateTotalQuantity(newSizeQuantities)
+
+      if (newTotalQuantity <= 0) {
+        return NextResponse.json(
+          { error: '總數量必須大於 0' },
+          { status: 400 }
+        )
+      }
+
+      quantityDifference = newTotalQuantity - stockInRecord.total_quantity
+      updateData.size_quantities = newSizeQuantities
+      updateData.total_quantity = newTotalQuantity
+
+      // 計算產品各尺寸的庫存變化
+      const currentSizeStock = product.size_stock as Record<string, number> || {}
+      const newSizeStock = { ...currentSizeStock }
+
+      // 先扣除舊的數量,再加上新的數量
+      for (const [size, oldQty] of Object.entries(oldSizeQuantities)) {
+        const currentQty = currentSizeStock[size] || 0
+        newSizeStock[size] = currentQty - (oldQty as number)
+      }
+
+      for (const [size, newQty] of Object.entries(newSizeQuantities)) {
+        const currentQty = newSizeStock[size] || 0
+        newSizeStock[size] = currentQty + (newQty as number)
+      }
+
+      // 檢查是否有負庫存
+      for (const [size, qty] of Object.entries(newSizeStock)) {
+        if (qty < 0) {
+          return NextResponse.json(
+            { error: `無法更新: ${size} 的庫存將變為負數` },
+            { status: 400 }
+          )
         }
-
-        const { data: product } = await productQuery.single()
-
-        if (product) {
-          // 3. 重新計算產品的平均成本
-          // 舊的總成本價值 - 這筆進貨的舊成本 + 這筆進貨的新成本
-          const newTotalCostValue = product.total_cost_value - oldTotalCost + newTotalCost
-          const newAvgUnitCost = product.total_stock > 0
-            ? newTotalCostValue / product.total_stock
-            : 0
-
-          // 4. 更新產品的成本資訊
-          await supabaseAdmin
-            .from('products')
-            .update({
-              avg_unit_cost: newAvgUnitCost,
-              total_cost_value: newTotalCostValue,
-              updated_at: new Date().toISOString(),
-            })
-            .eq('id', product.id)
+        // 移除數量為0的尺寸
+        if (qty === 0) {
+          delete newSizeStock[size]
         }
       }
+
+      // 更新產品庫存
+      const newProductTotalStock = product.total_stock + quantityDifference
+
+      if (newProductTotalStock < 0) {
+        return NextResponse.json(
+          { error: '無法更新: 總庫存將變為負數' },
+          { status: 400 }
+        )
+      }
+
+      // 計算新的成本
+      const finalUnitCost = unit_cost !== undefined ? parseFloat(unit_cost) : stockInRecord.unit_cost
+      const newTotalCost = finalUnitCost * newTotalQuantity
+      const oldTotalCost = stockInRecord.total_cost
+
+      const newTotalCostValue = product.total_cost_value - oldTotalCost + newTotalCost
+      const newAvgUnitCost = newProductTotalStock > 0
+        ? newTotalCostValue / newProductTotalStock
+        : 0
+
+      updateData.unit_cost = finalUnitCost
+      updateData.total_cost = newTotalCost
+
+      // 更新產品
+      await supabaseAdmin
+        .from('products')
+        .update({
+          size_stock: newSizeStock,
+          total_stock: newProductTotalStock,
+          avg_unit_cost: newAvgUnitCost,
+          total_cost_value: newTotalCostValue,
+          updated_at: new Date().toISOString(),
+        })
+        .eq('id', product.id)
+
+      // 記錄庫存異動
+      if (quantityDifference !== 0) {
+        await supabaseAdmin
+          .from('inventory_movements')
+          .insert({
+            product_id: product.id,
+            movement_type: 'adjustment',
+            size: null,
+            quantity: quantityDifference,
+            previous_total: product.total_stock,
+            current_total: newProductTotalStock,
+            reference_type: 'stock_in_edit',
+            reference_id: parseInt(id),
+            note: `編輯進貨記錄 #${id}: ${stockInRecord.product_name} (${quantityDifference > 0 ? '+' : ''}${quantityDifference})`,
+          })
+      }
+    } else if (unit_cost !== undefined) {
+      // 只更新單價,不更新數量
+      const newUnitCost = parseFloat(unit_cost)
+      const newTotalCost = newUnitCost * stockInRecord.total_quantity
+      const oldTotalCost = stockInRecord.total_cost
+
+      updateData.unit_cost = newUnitCost
+      updateData.total_cost = newTotalCost
+
+      // 重新計算產品的平均成本
+      const newTotalCostValue = product.total_cost_value - oldTotalCost + newTotalCost
+      const newAvgUnitCost = product.total_stock > 0
+        ? newTotalCostValue / product.total_stock
+        : 0
+
+      await supabaseAdmin
+        .from('products')
+        .update({
+          avg_unit_cost: newAvgUnitCost,
+          total_cost_value: newTotalCostValue,
+          updated_at: new Date().toISOString(),
+        })
+        .eq('id', product.id)
     }
 
     const { data, error } = await supabaseAdmin
@@ -353,7 +459,7 @@ export async function PUT(request: Request) {
     return NextResponse.json({
       success: true,
       data,
-      message: '進貨記錄已更新,產品成本已重新計算',
+      message: '進貨記錄已更新,產品庫存與成本已重新計算',
     })
 
   } catch (error: any) {

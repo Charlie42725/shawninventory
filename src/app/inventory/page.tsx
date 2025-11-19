@@ -940,6 +940,59 @@ function StockInModal({
   const [loading, setLoading] = useState(false)
   const [costInputMode, setCostInputMode] = useState<'unit' | 'total'>('unit') // 'unit' = 單價, 'total' = 總成本
   const [totalCostInput, setTotalCostInput] = useState('')
+  const [suggestions, setSuggestions] = useState<Array<{
+    product_name: string
+    color: string | null
+    ip_category: string | null
+    category_id: number
+  }>>([])
+  const [showSuggestions, setShowSuggestions] = useState(false)
+  const [suggestionLoading, setSuggestionLoading] = useState(false)
+
+  // 獲取產品名稱建議
+  const fetchSuggestions = async (query: string, categoryId: string) => {
+    if (!query || query.length < 1) {
+      setSuggestions([])
+      return
+    }
+
+    setSuggestionLoading(true)
+    try {
+      const url = categoryId
+        ? `/api/inventory/suggestions?query=${encodeURIComponent(query)}&category_id=${categoryId}`
+        : `/api/inventory/suggestions?query=${encodeURIComponent(query)}`
+
+      const res = await fetch(url)
+      const data = await res.json()
+
+      if (Array.isArray(data)) {
+        setSuggestions(data)
+      }
+    } catch (error) {
+      console.error('Error fetching suggestions:', error)
+    } finally {
+      setSuggestionLoading(false)
+    }
+  }
+
+  // 當產品名稱輸入變化時
+  const handleProductNameChange = (value: string) => {
+    setFormData(prev => ({ ...prev, product_name: value }))
+    fetchSuggestions(value, formData.category_id)
+    setShowSuggestions(true)
+  }
+
+  // 選擇建議
+  const selectSuggestion = (suggestion: typeof suggestions[0]) => {
+    setFormData(prev => ({
+      ...prev,
+      product_name: suggestion.product_name,
+      color: suggestion.color || '',
+      ip_category: suggestion.ip_category || ''
+    }))
+    setShowSuggestions(false)
+    setSuggestions([])
+  }
 
   const selectedCategory = categories.find(c => c.id === parseInt(formData.category_id || '0'))
   const availableSizes = selectedCategory?.size_config?.sizes || []
@@ -1061,15 +1114,44 @@ function StockInModal({
             </select>
           </div>
 
-          <div>
+          <div className="relative">
             <label className="block text-sm font-medium text-gray-900 dark:text-gray-100 mb-1">產品名稱 *</label>
             <input
               type="text"
               value={formData.product_name}
-              onChange={e => setFormData({...formData, product_name: e.target.value})}
+              onChange={e => handleProductNameChange(e.target.value)}
+              onFocus={() => formData.product_name && setShowSuggestions(true)}
+              onBlur={() => setTimeout(() => setShowSuggestions(false), 200)}
               className="w-full px-3 py-2 border border-gray-300 dark:border-gray-600 rounded-md focus:outline-none focus:ring-2 focus:ring-indigo-500 text-gray-900 dark:text-gray-100 bg-white dark:bg-gray-700 transition-colors"
+              placeholder="輸入關鍵字搜尋現有產品"
               required
+              autoComplete="off"
             />
+            {/* 自動完成下拉選單 */}
+            {showSuggestions && suggestions.length > 0 && (
+              <div className="absolute z-10 w-full mt-1 bg-white dark:bg-gray-700 border border-gray-300 dark:border-gray-600 rounded-md shadow-lg max-h-60 overflow-auto">
+                {suggestions.map((suggestion, index) => (
+                  <button
+                    key={index}
+                    type="button"
+                    onClick={() => selectSuggestion(suggestion)}
+                    className="w-full px-3 py-2 text-left hover:bg-gray-100 dark:hover:bg-gray-600 text-sm transition-colors"
+                  >
+                    <div className="font-medium text-gray-900 dark:text-gray-100">{suggestion.product_name}</div>
+                    {(suggestion.color || suggestion.ip_category) && (
+                      <div className="text-xs text-gray-500 dark:text-gray-400">
+                        {suggestion.color || suggestion.ip_category}
+                      </div>
+                    )}
+                  </button>
+                ))}
+              </div>
+            )}
+            {showSuggestions && suggestionLoading && (
+              <div className="absolute z-10 w-full mt-1 bg-white dark:bg-gray-700 border border-gray-300 dark:border-gray-600 rounded-md shadow-lg p-3 text-sm text-gray-500 dark:text-gray-400">
+                搜尋中...
+              </div>
+            )}
           </div>
 
           {selectedCategory?.name !== '潮玩' && (
@@ -1254,23 +1336,44 @@ function EditStockInModal({
     date: record.date,
     order_type: record.order_type,
     unit_cost: record.unit_cost.toString(),
-    note: record.note || ''
+    note: record.note || '',
+    size_quantities: { ...record.size_quantities } as Record<string, number>
   })
   const [loading, setLoading] = useState(false)
   const [costInputMode, setCostInputMode] = useState<'unit' | 'total'>('unit')
   const [totalCostInput, setTotalCostInput] = useState('')
 
+  const selectedCategory = categories.find(c => c.id === record.category_id)
+  const availableSizes = selectedCategory?.size_config?.sizes || []
+
+  const getTotalQuantity = () => {
+    return Object.values(formData.size_quantities).reduce((sum, qty) => sum + qty, 0)
+  }
+
+  const updateSizeQuantity = (size: string, value: string) => {
+    const qty = parseInt(value) || 0
+    setFormData(prev => ({
+      ...prev,
+      size_quantities: {
+        ...prev.size_quantities,
+        [size]: qty
+      }
+    }))
+  }
+
   const calculateTotal = () => {
     const unitCost = parseFloat(formData.unit_cost) || 0
-    return (record.total_quantity * unitCost).toFixed(2)
+    const totalQty = getTotalQuantity()
+    return (totalQty * unitCost).toFixed(2)
   }
 
   // 當輸入總成本時,自動計算單價
   const handleTotalCostChange = (value: string) => {
     setTotalCostInput(value)
-    if (value) {
+    const totalQty = getTotalQuantity()
+    if (value && totalQty > 0) {
       const totalCost = parseFloat(value)
-      const unitCost = (totalCost / record.total_quantity).toFixed(2)
+      const unitCost = (totalCost / totalQty).toFixed(2)
       setFormData(prev => ({ ...prev, unit_cost: unitCost }))
     }
   }
@@ -1332,14 +1435,47 @@ function EditStockInModal({
               <div>
                 <span className="text-gray-500 dark:text-gray-400">顏色/IP:</span> <span className="text-gray-900 dark:text-gray-100">{record.color || record.ip_category || '-'}</span>
               </div>
-              <div>
-                <span className="text-gray-500 dark:text-gray-400">數量:</span> <span className="text-gray-900 dark:text-gray-100">{record.total_quantity}</span>
-              </div>
             </div>
             <p className="text-xs text-gray-500 dark:text-gray-400 mt-2">
-              註:產品、數量等核心資訊無法修改,如需變更請刪除後重新建立
+              註:產品名稱無法修改,如需變更請刪除後重新建立
             </p>
           </div>
+
+          {/* 尺寸數量輸入 */}
+          {availableSizes.length > 0 ? (
+            <div>
+              <label className="block text-xs sm:text-sm font-medium text-gray-900 dark:text-gray-100 mb-2">各尺寸數量</label>
+              <div className="grid grid-cols-2 sm:grid-cols-3 gap-2">
+                {availableSizes.map(size => (
+                  <div key={size} className="flex items-center gap-2">
+                    <label className="w-12 sm:w-16 text-xs sm:text-sm text-gray-700 dark:text-gray-300 flex-shrink-0">{size}:</label>
+                    <input
+                      type="number"
+                      min="0"
+                      value={formData.size_quantities[size] || ''}
+                      onChange={e => updateSizeQuantity(size, e.target.value)}
+                      className="flex-1 px-2 py-1 border border-gray-300 dark:border-gray-600 rounded-md focus:outline-none focus:ring-2 focus:ring-indigo-500 text-gray-900 dark:text-gray-100 bg-white dark:bg-gray-700 text-sm transition-colors"
+                    />
+                  </div>
+                ))}
+              </div>
+              <p className="text-xs text-gray-500 dark:text-gray-400 mt-2">
+                總數量: {getTotalQuantity()}
+              </p>
+            </div>
+          ) : (
+            <div>
+              <label className="block text-sm font-medium text-gray-900 dark:text-gray-100 mb-1">數量 *</label>
+              <input
+                type="number"
+                min="1"
+                value={formData.size_quantities['default'] || ''}
+                onChange={e => updateSizeQuantity('default', e.target.value)}
+                className="w-full px-3 py-2 border border-gray-300 dark:border-gray-600 rounded-md focus:outline-none focus:ring-2 focus:ring-indigo-500 text-gray-900 dark:text-gray-100 bg-white dark:bg-gray-700 transition-colors"
+                required
+              />
+            </div>
+          )}
 
           <div className="grid grid-cols-1 sm:grid-cols-2 gap-3 sm:gap-4">
             <div>
