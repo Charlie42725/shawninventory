@@ -145,13 +145,18 @@ export default function InventoryPage() {
     })
   }
 
-  const confirmDelete = async () => {
+  const confirmDelete = async (forceDelete = false) => {
     if (!deleteConfirm.id) return
 
     try {
-      const endpoint = deleteConfirm.type === 'product'
+      let endpoint = deleteConfirm.type === 'product'
         ? `/api/inventory?id=${deleteConfirm.id}`
         : `/api/inventory/stock-in?id=${deleteConfirm.id}`
+
+      // 如果是強制刪除，加上 force 參數
+      if (forceDelete && deleteConfirm.type === 'stock-in') {
+        endpoint += '&force=true'
+      }
 
       const res = await fetch(endpoint, {
         method: 'DELETE',
@@ -162,13 +167,25 @@ export default function InventoryPage() {
       if (data.success) {
         alert(data.message)
         fetchData()
+        setDeleteConfirm({ isOpen: false, id: null, name: '', type: 'product' })
       } else {
-        alert(`錯誤: ${data.error}`)
+        // 如果可以強制刪除，詢問用戶
+        if (data.canForceDelete) {
+          const shouldForce = window.confirm(
+            `${data.error}\n\n是否要強制刪除此進貨記錄？（將無法回退庫存）`
+          )
+          if (shouldForce) {
+            await confirmDelete(true)
+            return
+          }
+        } else {
+          alert(`錯誤: ${data.error}`)
+        }
+        setDeleteConfirm({ isOpen: false, id: null, name: '', type: 'product' })
       }
     } catch (error) {
       console.error('Error deleting:', error)
       alert('刪除失敗')
-    } finally {
       setDeleteConfirm({ isOpen: false, id: null, name: '', type: 'product' })
     }
   }

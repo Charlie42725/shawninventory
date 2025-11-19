@@ -112,6 +112,7 @@ export async function DELETE(request: Request) {
   try {
     const { searchParams } = new URL(request.url)
     const id = searchParams.get('id')
+    const force = searchParams.get('force') === 'true'  // 強制刪除（當產品不存在時）
 
     if (!id) {
       return NextResponse.json(
@@ -150,9 +151,31 @@ export async function DELETE(request: Request) {
 
     const { data: product, error: productError } = await query.single()
 
+    // 如果找不到產品（可能已被合併或刪除）
     if (productError || !product) {
+      // 如果有 force 參數，允許直接刪除進貨記錄（跳過回退庫存）
+      if (force) {
+        const { error: deleteError } = await supabaseAdmin
+          .from('stock_in')
+          .delete()
+          .eq('id', parseInt(id))
+
+        if (deleteError) {
+          throw deleteError
+        }
+
+        return NextResponse.json({
+          success: true,
+          message: `已強制刪除進貨記錄（對應產品已不存在，無法回退庫存）: ${stockInRecord.product_name} x ${stockInRecord.total_quantity}`,
+        })
+      }
+
+      // 否則返回錯誤，提示用戶可以使用強制刪除
       return NextResponse.json(
-        { error: '找不到對應的產品' },
+        {
+          error: '找不到對應的產品，可能已被合併或刪除。如需強制刪除請加上 force=true 參數',
+          canForceDelete: true
+        },
         { status: 404 }
       )
     }
