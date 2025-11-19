@@ -21,13 +21,20 @@ export async function processStockIn(stockInData: StockIn) {
     }
 
     // 2. 查找或創建產品
-    const { data: existingProduct, error: findError } = await supabaseAdmin
+    let productQuery = supabaseAdmin
       .from('products')
       .select('*')
       .eq('category_id', stockInData.category_id)
       .eq('product_name', stockInData.product_name)
-      .eq('color', stockInData.color || null)
-      .maybeSingle()
+
+    // 正確處理 null 值匹配
+    if (stockInData.color) {
+      productQuery = productQuery.eq('color', stockInData.color)
+    } else {
+      productQuery = productQuery.is('color', null)
+    }
+
+    const { data: existingProduct, error: findError } = await productQuery.maybeSingle()
 
     if (findError) {
       throw new Error(`查詢產品失敗: ${findError.message}`)
@@ -284,17 +291,23 @@ export async function findProduct(params: {
   product_name: string
   color?: string | null
 }) {
-  const query = supabaseAdmin
+  let query = supabaseAdmin
     .from('products')
     .select('*, category:product_categories(*)')
 
   if (params.category_id) {
-    query.eq('category_id', params.category_id)
+    query = query.eq('category_id', params.category_id)
   }
 
   // 精確匹配
-  query.eq('product_name', params.product_name)
-  query.eq('color', params.color || null)
+  query = query.eq('product_name', params.product_name)
+
+  // 正確處理 null 值匹配
+  if (params.color) {
+    query = query.eq('color', params.color)
+  } else {
+    query = query.is('color', null)
+  }
 
   const { data, error } = await query.maybeSingle()
 
