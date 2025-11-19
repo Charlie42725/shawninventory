@@ -459,6 +459,71 @@ export default function InventoryPage() {
   )
 }
 
+// 分頁組件
+function Pagination({
+  currentPage,
+  totalPages,
+  onPageChange
+}: {
+  currentPage: number
+  totalPages: number
+  onPageChange: (page: number) => void
+}) {
+  if (totalPages <= 1) return null
+
+  const getPageNumbers = () => {
+    const pages: (number | string)[] = []
+    if (totalPages <= 7) {
+      for (let i = 1; i <= totalPages; i++) pages.push(i)
+    } else {
+      if (currentPage <= 3) {
+        pages.push(1, 2, 3, 4, '...', totalPages)
+      } else if (currentPage >= totalPages - 2) {
+        pages.push(1, '...', totalPages - 3, totalPages - 2, totalPages - 1, totalPages)
+      } else {
+        pages.push(1, '...', currentPage - 1, currentPage, currentPage + 1, '...', totalPages)
+      }
+    }
+    return pages
+  }
+
+  return (
+    <div className="flex items-center justify-center gap-1 sm:gap-2 mt-4 flex-wrap">
+      <button
+        onClick={() => onPageChange(currentPage - 1)}
+        disabled={currentPage === 1}
+        className="px-2 sm:px-3 py-1 text-xs sm:text-sm rounded-md bg-gray-200 dark:bg-gray-700 text-gray-700 dark:text-gray-300 hover:bg-gray-300 dark:hover:bg-gray-600 disabled:opacity-50 disabled:cursor-not-allowed transition-colors"
+      >
+        上一頁
+      </button>
+      {getPageNumbers().map((page, index) => (
+        typeof page === 'number' ? (
+          <button
+            key={index}
+            onClick={() => onPageChange(page)}
+            className={`px-2 sm:px-3 py-1 text-xs sm:text-sm rounded-md transition-colors ${
+              currentPage === page
+                ? 'bg-indigo-600 text-white'
+                : 'bg-gray-200 dark:bg-gray-700 text-gray-700 dark:text-gray-300 hover:bg-gray-300 dark:hover:bg-gray-600'
+            }`}
+          >
+            {page}
+          </button>
+        ) : (
+          <span key={index} className="px-1 sm:px-2 text-gray-500 dark:text-gray-400">...</span>
+        )
+      ))}
+      <button
+        onClick={() => onPageChange(currentPage + 1)}
+        disabled={currentPage === totalPages}
+        className="px-2 sm:px-3 py-1 text-xs sm:text-sm rounded-md bg-gray-200 dark:bg-gray-700 text-gray-700 dark:text-gray-300 hover:bg-gray-300 dark:hover:bg-gray-600 disabled:opacity-50 disabled:cursor-not-allowed transition-colors"
+      >
+        下一頁
+      </button>
+    </div>
+  )
+}
+
 // 庫存列表組件
 function InventoryTable({
   products,
@@ -469,6 +534,16 @@ function InventoryTable({
   onEdit: (product: Product) => void
   onDelete: (id: number, name: string) => void
 }) {
+  const [currentPage, setCurrentPage] = useState(1)
+  const itemsPerPage = 50
+  const totalPages = Math.ceil(products.length / itemsPerPage)
+  const paginatedProducts = products.slice((currentPage - 1) * itemsPerPage, currentPage * itemsPerPage)
+
+  // 當資料變更時重置頁碼
+  useEffect(() => {
+    setCurrentPage(1)
+  }, [products.length])
+
   if (products.length === 0) {
     return (
       <div className="text-center py-12">
@@ -480,102 +555,108 @@ function InventoryTable({
   }
 
   return (
-    <div className="overflow-x-auto -mx-3 sm:mx-0">
-      <table className="min-w-full divide-y divide-gray-200 dark:divide-gray-700">
-        <thead className="bg-gray-50 dark:bg-gray-900">
-          <tr>
-            <th className="px-3 sm:px-6 py-2 sm:py-3 text-left text-xs font-medium text-gray-500 dark:text-gray-400 uppercase tracking-wider">
-              類別
-            </th>
-            <th className="px-3 sm:px-6 py-2 sm:py-3 text-left text-xs font-medium text-gray-500 dark:text-gray-400 uppercase tracking-wider">
-              產品名稱
-            </th>
-            <th className="px-3 sm:px-6 py-2 sm:py-3 text-left text-xs font-medium text-gray-500 dark:text-gray-400 uppercase tracking-wider hidden lg:table-cell">
-              顏色/IP
-            </th>
-            <th className="px-3 sm:px-6 py-2 sm:py-3 text-left text-xs font-medium text-gray-500 dark:text-gray-400 uppercase tracking-wider hidden xl:table-cell">
-              尺寸庫存
-            </th>
-            <th className="px-3 sm:px-6 py-2 sm:py-3 text-center text-xs font-medium text-gray-500 dark:text-gray-400 uppercase tracking-wider">
-              總庫存
-            </th>
-            <th className="px-3 sm:px-6 py-2 sm:py-3 text-center text-xs font-medium text-gray-500 dark:text-gray-400 uppercase tracking-wider hidden md:table-cell">
-              平均成本
-            </th>
-            <th className="px-3 sm:px-6 py-2 sm:py-3 text-center text-xs font-medium text-gray-500 dark:text-gray-400 uppercase tracking-wider hidden sm:table-cell">
-              總成本價值
-            </th>
-            <th className="px-3 sm:px-6 py-2 sm:py-3 text-center text-xs font-medium text-gray-500 dark:text-gray-400 uppercase tracking-wider">
-              操作
-            </th>
-          </tr>
-        </thead>
-        <tbody className="bg-white dark:bg-gray-800 divide-y divide-gray-200 dark:divide-gray-700">
-          {products.map((product) => (
-            <tr key={product.id} className="hover:bg-gray-50 dark:hover:bg-gray-700 transition-colors">
-              <td className="px-3 sm:px-6 py-3 sm:py-4 whitespace-nowrap">
-                <span className="px-2 py-1 rounded-full text-xs bg-blue-100 dark:bg-blue-900 text-blue-800 dark:text-blue-200">
-                  {product.category?.name}
-                </span>
-              </td>
-              <td className="px-3 sm:px-6 py-3 sm:py-4">
-                <div className="text-xs sm:text-sm font-medium text-gray-900 dark:text-gray-100 break-words min-w-[100px] max-w-[150px] sm:max-w-none">
-                  {product.product_name}
-                  <div className="lg:hidden text-xs text-gray-500 dark:text-gray-400 mt-1">
-                    {product.color || product.ip_category || ''}
-                  </div>
-                </div>
-              </td>
-              <td className="px-3 sm:px-6 py-3 sm:py-4 whitespace-nowrap hidden lg:table-cell">
-                <span className="text-sm text-gray-600 dark:text-gray-400">
-                  {product.color || product.ip_category || '-'}
-                </span>
-              </td>
-              <td className="px-3 sm:px-6 py-3 sm:py-4 hidden xl:table-cell">
-                <div className="text-sm text-gray-600 dark:text-gray-400 max-w-xs">
-                  {Object.entries(product.size_stock).length > 0
-                    ? Object.entries(product.size_stock)
-                        .filter(([_, qty]) => qty > 0)
-                        .map(([size, qty]) => `${size}:${qty}`)
-                        .join(', ')
-                    : '-'}
-                </div>
-              </td>
-              <td className="px-3 sm:px-6 py-3 sm:py-4 whitespace-nowrap text-center">
-                <span className={`inline-flex px-2 py-1 text-xs font-semibold rounded-full ${
-                  product.total_stock === 0
-                    ? 'bg-red-100 dark:bg-red-900 text-red-800 dark:text-red-200'
-                    : product.total_stock < 10
-                      ? 'bg-yellow-100 dark:bg-yellow-900 text-yellow-800 dark:text-yellow-200'
-                      : 'bg-green-100 dark:bg-green-900 text-green-800 dark:text-green-200'
-                }`}>
-                  {product.total_stock}
-                </span>
-              </td>
-              <td className="px-3 sm:px-6 py-3 sm:py-4 whitespace-nowrap text-center text-xs sm:text-sm text-gray-900 dark:text-gray-100 hidden md:table-cell">
-                ${product.avg_unit_cost.toFixed(2)}
-              </td>
-              <td className="px-3 sm:px-6 py-3 sm:py-4 whitespace-nowrap text-center text-xs sm:text-sm font-medium text-gray-900 dark:text-gray-100 hidden sm:table-cell">
-                ${product.total_cost_value.toFixed(2)}
-              </td>
-              <td className="px-3 sm:px-6 py-3 sm:py-4 whitespace-nowrap text-center text-xs sm:text-sm font-medium">
-                <button
-                  onClick={() => onEdit(product)}
-                  className="text-indigo-600 dark:text-indigo-400 hover:text-indigo-900 dark:hover:text-indigo-300 mr-3 transition-colors"
-                >
-                  編輯
-                </button>
-                <button
-                  onClick={() => onDelete(product.id, product.product_name)}
-                  className="text-red-600 dark:text-red-400 hover:text-red-900 dark:hover:text-red-300 transition-colors"
-                >
-                  刪除
-                </button>
-              </td>
+    <div>
+      <div className="overflow-x-auto -mx-3 sm:mx-0">
+        <table className="min-w-full divide-y divide-gray-200 dark:divide-gray-700">
+          <thead className="bg-gray-50 dark:bg-gray-900">
+            <tr>
+              <th className="px-3 sm:px-6 py-2 sm:py-3 text-left text-xs font-medium text-gray-500 dark:text-gray-400 uppercase tracking-wider">
+                類別
+              </th>
+              <th className="px-3 sm:px-6 py-2 sm:py-3 text-left text-xs font-medium text-gray-500 dark:text-gray-400 uppercase tracking-wider">
+                產品名稱
+              </th>
+              <th className="px-3 sm:px-6 py-2 sm:py-3 text-left text-xs font-medium text-gray-500 dark:text-gray-400 uppercase tracking-wider hidden lg:table-cell">
+                顏色/IP
+              </th>
+              <th className="px-3 sm:px-6 py-2 sm:py-3 text-left text-xs font-medium text-gray-500 dark:text-gray-400 uppercase tracking-wider hidden xl:table-cell">
+                尺寸庫存
+              </th>
+              <th className="px-3 sm:px-6 py-2 sm:py-3 text-center text-xs font-medium text-gray-500 dark:text-gray-400 uppercase tracking-wider">
+                總庫存
+              </th>
+              <th className="px-3 sm:px-6 py-2 sm:py-3 text-center text-xs font-medium text-gray-500 dark:text-gray-400 uppercase tracking-wider hidden md:table-cell">
+                平均成本
+              </th>
+              <th className="px-3 sm:px-6 py-2 sm:py-3 text-center text-xs font-medium text-gray-500 dark:text-gray-400 uppercase tracking-wider hidden sm:table-cell">
+                總成本價值
+              </th>
+              <th className="px-3 sm:px-6 py-2 sm:py-3 text-center text-xs font-medium text-gray-500 dark:text-gray-400 uppercase tracking-wider">
+                操作
+              </th>
             </tr>
-          ))}
-        </tbody>
-      </table>
+          </thead>
+          <tbody className="bg-white dark:bg-gray-800 divide-y divide-gray-200 dark:divide-gray-700">
+            {paginatedProducts.map((product) => (
+              <tr key={product.id} className="hover:bg-gray-50 dark:hover:bg-gray-700 transition-colors">
+                <td className="px-3 sm:px-6 py-3 sm:py-4 whitespace-nowrap">
+                  <span className="px-2 py-1 rounded-full text-xs bg-blue-100 dark:bg-blue-900 text-blue-800 dark:text-blue-200">
+                    {product.category?.name}
+                  </span>
+                </td>
+                <td className="px-3 sm:px-6 py-3 sm:py-4">
+                  <div className="text-xs sm:text-sm font-medium text-gray-900 dark:text-gray-100 break-words min-w-[100px] max-w-[150px] sm:max-w-none">
+                    {product.product_name}
+                    <div className="lg:hidden text-xs text-gray-500 dark:text-gray-400 mt-1">
+                      {product.color || product.ip_category || ''}
+                    </div>
+                  </div>
+                </td>
+                <td className="px-3 sm:px-6 py-3 sm:py-4 whitespace-nowrap hidden lg:table-cell">
+                  <span className="text-sm text-gray-600 dark:text-gray-400">
+                    {product.color || product.ip_category || '-'}
+                  </span>
+                </td>
+                <td className="px-3 sm:px-6 py-3 sm:py-4 hidden xl:table-cell">
+                  <div className="text-sm text-gray-600 dark:text-gray-400 max-w-xs">
+                    {Object.entries(product.size_stock).length > 0
+                      ? Object.entries(product.size_stock)
+                          .filter(([_, qty]) => qty > 0)
+                          .map(([size, qty]) => `${size}:${qty}`)
+                          .join(', ')
+                      : '-'}
+                  </div>
+                </td>
+                <td className="px-3 sm:px-6 py-3 sm:py-4 whitespace-nowrap text-center">
+                  <span className={`inline-flex px-2 py-1 text-xs font-semibold rounded-full ${
+                    product.total_stock === 0
+                      ? 'bg-red-100 dark:bg-red-900 text-red-800 dark:text-red-200'
+                      : product.total_stock < 10
+                        ? 'bg-yellow-100 dark:bg-yellow-900 text-yellow-800 dark:text-yellow-200'
+                        : 'bg-green-100 dark:bg-green-900 text-green-800 dark:text-green-200'
+                  }`}>
+                    {product.total_stock}
+                  </span>
+                </td>
+                <td className="px-3 sm:px-6 py-3 sm:py-4 whitespace-nowrap text-center text-xs sm:text-sm text-gray-900 dark:text-gray-100 hidden md:table-cell">
+                  ${product.avg_unit_cost.toFixed(2)}
+                </td>
+                <td className="px-3 sm:px-6 py-3 sm:py-4 whitespace-nowrap text-center text-xs sm:text-sm font-medium text-gray-900 dark:text-gray-100 hidden sm:table-cell">
+                  ${product.total_cost_value.toFixed(2)}
+                </td>
+                <td className="px-3 sm:px-6 py-3 sm:py-4 whitespace-nowrap text-center text-xs sm:text-sm font-medium">
+                  <button
+                    onClick={() => onEdit(product)}
+                    className="text-indigo-600 dark:text-indigo-400 hover:text-indigo-900 dark:hover:text-indigo-300 mr-3 transition-colors"
+                  >
+                    編輯
+                  </button>
+                  <button
+                    onClick={() => onDelete(product.id, product.product_name)}
+                    className="text-red-600 dark:text-red-400 hover:text-red-900 dark:hover:text-red-300 transition-colors"
+                  >
+                    刪除
+                  </button>
+                </td>
+              </tr>
+            ))}
+          </tbody>
+        </table>
+      </div>
+      <div className="mt-2 text-xs sm:text-sm text-gray-500 dark:text-gray-400 text-center">
+        共 {products.length} 筆資料，第 {currentPage} / {totalPages} 頁
+      </div>
+      <Pagination currentPage={currentPage} totalPages={totalPages} onPageChange={setCurrentPage} />
     </div>
   )
 }
@@ -592,6 +673,9 @@ function StockInTable({
   onEdit: (record: StockInRecord) => void
   dateFilter: { startDate: string; endDate: string }
 }) {
+  const [currentPage, setCurrentPage] = useState(1)
+  const itemsPerPage = 50
+
   // 日期篩選
   const filteredRecords = records.filter((record) => {
     const recordDate = new Date(record.date)
@@ -602,6 +686,14 @@ function StockInTable({
     if (end && recordDate > end) return false
     return true
   })
+
+  const totalPages = Math.ceil(filteredRecords.length / itemsPerPage)
+  const paginatedRecords = filteredRecords.slice((currentPage - 1) * itemsPerPage, currentPage * itemsPerPage)
+
+  // 當篩選變更時重置頁碼
+  useEffect(() => {
+    setCurrentPage(1)
+  }, [dateFilter.startDate, dateFilter.endDate, records.length])
 
   if (filteredRecords.length === 0) {
     return (
@@ -616,104 +708,120 @@ function StockInTable({
   }
 
   return (
-    <div className="overflow-x-auto">
-      <table className="min-w-full divide-y divide-gray-200 dark:divide-gray-700">
-        <thead className="bg-gray-50 dark:bg-gray-900">
-          <tr>
-            <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 dark:text-gray-400 uppercase tracking-wider">
-              日期
-            </th>
-            <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 dark:text-gray-400 uppercase tracking-wider">
-              類型
-            </th>
-            <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 dark:text-gray-400 uppercase tracking-wider">
-              類別
-            </th>
-            <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 dark:text-gray-400 uppercase tracking-wider">
-              產品名稱
-            </th>
-            <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 dark:text-gray-400 uppercase tracking-wider">
-              顏色/IP
-            </th>
-            <th className="px-6 py-3 text-center text-xs font-medium text-gray-500 dark:text-gray-400 uppercase tracking-wider">
-              數量
-            </th>
-            <th className="px-6 py-3 text-center text-xs font-medium text-gray-500 dark:text-gray-400 uppercase tracking-wider">
-              單價
-            </th>
-            <th className="px-6 py-3 text-center text-xs font-medium text-gray-500 dark:text-gray-400 uppercase tracking-wider">
-              總成本
-            </th>
-            <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 dark:text-gray-400 uppercase tracking-wider">
-              備註
-            </th>
-            <th className="px-6 py-3 text-center text-xs font-medium text-gray-500 dark:text-gray-400 uppercase tracking-wider">
-              操作
-            </th>
-          </tr>
-        </thead>
-        <tbody className="bg-white dark:bg-gray-800 divide-y divide-gray-200 dark:divide-gray-700">
-          {filteredRecords.map((record) => (
-            <tr key={record.id} className="hover:bg-gray-50 dark:hover:bg-gray-700 transition-colors">
-              <td className="px-6 py-4 whitespace-nowrap text-sm text-gray-600 dark:text-gray-400">
-                {new Date(record.date).toLocaleDateString('zh-TW')}
-              </td>
-              <td className="px-6 py-4 whitespace-nowrap">
-                <span className={`px-2 py-1 rounded-full text-xs ${
-                  record.order_type === '進貨'
-                    ? 'bg-green-100 dark:bg-green-900 text-green-800 dark:text-green-200'
-                    : 'bg-yellow-100 dark:bg-yellow-900 text-yellow-800 dark:text-yellow-200'
-                }`}>
-                  {record.order_type}
-                </span>
-              </td>
-              <td className="px-6 py-4 whitespace-nowrap text-sm text-gray-600 dark:text-gray-400">
-                {record.category?.name}
-              </td>
-              <td className="px-6 py-4 whitespace-nowrap text-sm font-medium text-gray-900 dark:text-gray-100">
-                {record.product_name}
-              </td>
-              <td className="px-6 py-4 whitespace-nowrap text-sm text-gray-600 dark:text-gray-400">
-                {record.color || record.ip_category || '-'}
-              </td>
-              <td className="px-6 py-4 whitespace-nowrap text-center text-sm font-medium text-gray-900 dark:text-gray-100">
-                {record.total_quantity}
-              </td>
-              <td className="px-6 py-4 whitespace-nowrap text-center text-sm text-gray-600 dark:text-gray-400">
-                ${record.unit_cost.toFixed(2)}
-              </td>
-              <td className="px-6 py-4 whitespace-nowrap text-center text-sm font-bold text-gray-900 dark:text-gray-100">
-                ${record.total_cost.toFixed(2)}
-              </td>
-              <td className="px-6 py-4 text-sm text-gray-600 dark:text-gray-400 max-w-xs">
-                <div className="truncate" title={record.note || ''}>
-                  {record.note || '-'}
-                </div>
-              </td>
-              <td className="px-6 py-4 whitespace-nowrap text-center text-sm font-medium">
-                <button
-                  onClick={() => onEdit(record)}
-                  className="text-indigo-600 dark:text-indigo-400 hover:text-indigo-900 dark:hover:text-indigo-300 mr-3 transition-colors"
-                >
-                  編輯
-                </button>
-                <button
-                  onClick={() => onDelete(record.id, record.product_name)}
-                  className="text-red-600 dark:text-red-400 hover:text-red-900 dark:hover:text-red-300 transition-colors"
-                >
-                  刪除
-                </button>
-              </td>
+    <div>
+      <div className="overflow-x-auto">
+        <table className="min-w-full divide-y divide-gray-200 dark:divide-gray-700">
+          <thead className="bg-gray-50 dark:bg-gray-900">
+            <tr>
+              <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 dark:text-gray-400 uppercase tracking-wider">
+                日期
+              </th>
+              <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 dark:text-gray-400 uppercase tracking-wider">
+                類型
+              </th>
+              <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 dark:text-gray-400 uppercase tracking-wider">
+                類別
+              </th>
+              <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 dark:text-gray-400 uppercase tracking-wider">
+                產品名稱
+              </th>
+              <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 dark:text-gray-400 uppercase tracking-wider">
+                顏色/IP
+              </th>
+              <th className="px-6 py-3 text-center text-xs font-medium text-gray-500 dark:text-gray-400 uppercase tracking-wider">
+                數量
+              </th>
+              <th className="px-6 py-3 text-center text-xs font-medium text-gray-500 dark:text-gray-400 uppercase tracking-wider">
+                單價
+              </th>
+              <th className="px-6 py-3 text-center text-xs font-medium text-gray-500 dark:text-gray-400 uppercase tracking-wider">
+                總成本
+              </th>
+              <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 dark:text-gray-400 uppercase tracking-wider">
+                備註
+              </th>
+              <th className="px-6 py-3 text-center text-xs font-medium text-gray-500 dark:text-gray-400 uppercase tracking-wider">
+                操作
+              </th>
             </tr>
-          ))}
-        </tbody>
-      </table>
+          </thead>
+          <tbody className="bg-white dark:bg-gray-800 divide-y divide-gray-200 dark:divide-gray-700">
+            {paginatedRecords.map((record) => (
+              <tr key={record.id} className="hover:bg-gray-50 dark:hover:bg-gray-700 transition-colors">
+                <td className="px-6 py-4 whitespace-nowrap text-sm text-gray-600 dark:text-gray-400">
+                  {new Date(record.date).toLocaleDateString('zh-TW')}
+                </td>
+                <td className="px-6 py-4 whitespace-nowrap">
+                  <span className={`px-2 py-1 rounded-full text-xs ${
+                    record.order_type === '進貨'
+                      ? 'bg-green-100 dark:bg-green-900 text-green-800 dark:text-green-200'
+                      : 'bg-yellow-100 dark:bg-yellow-900 text-yellow-800 dark:text-yellow-200'
+                  }`}>
+                    {record.order_type}
+                  </span>
+                </td>
+                <td className="px-6 py-4 whitespace-nowrap text-sm text-gray-600 dark:text-gray-400">
+                  {record.category?.name}
+                </td>
+                <td className="px-6 py-4 whitespace-nowrap text-sm font-medium text-gray-900 dark:text-gray-100">
+                  {record.product_name}
+                </td>
+                <td className="px-6 py-4 whitespace-nowrap text-sm text-gray-600 dark:text-gray-400">
+                  {record.color || record.ip_category || '-'}
+                </td>
+                <td className="px-6 py-4 whitespace-nowrap text-center text-sm font-medium text-gray-900 dark:text-gray-100">
+                  {record.total_quantity}
+                </td>
+                <td className="px-6 py-4 whitespace-nowrap text-center text-sm text-gray-600 dark:text-gray-400">
+                  ${record.unit_cost.toFixed(2)}
+                </td>
+                <td className="px-6 py-4 whitespace-nowrap text-center text-sm font-bold text-gray-900 dark:text-gray-100">
+                  ${record.total_cost.toFixed(2)}
+                </td>
+                <td className="px-6 py-4 text-sm text-gray-600 dark:text-gray-400 max-w-xs">
+                  <div className="truncate" title={record.note || ''}>
+                    {record.note || '-'}
+                  </div>
+                </td>
+                <td className="px-6 py-4 whitespace-nowrap text-center text-sm font-medium">
+                  <button
+                    onClick={() => onEdit(record)}
+                    className="text-indigo-600 dark:text-indigo-400 hover:text-indigo-900 dark:hover:text-indigo-300 mr-3 transition-colors"
+                  >
+                    編輯
+                  </button>
+                  <button
+                    onClick={() => onDelete(record.id, record.product_name)}
+                    className="text-red-600 dark:text-red-400 hover:text-red-900 dark:hover:text-red-300 transition-colors"
+                  >
+                    刪除
+                  </button>
+                </td>
+              </tr>
+            ))}
+          </tbody>
+        </table>
+      </div>
+      <div className="mt-2 text-xs sm:text-sm text-gray-500 dark:text-gray-400 text-center">
+        共 {filteredRecords.length} 筆資料，第 {currentPage} / {totalPages} 頁
+      </div>
+      <Pagination currentPage={currentPage} totalPages={totalPages} onPageChange={setCurrentPage} />
     </div>
   )
 }
 
 // 異動記錄組件
 function MovementsTable({ movements }: { movements: InventoryMovement[] }) {
+  const [currentPage, setCurrentPage] = useState(1)
+  const itemsPerPage = 50
+  const totalPages = Math.ceil(movements.length / itemsPerPage)
+  const paginatedMovements = movements.slice((currentPage - 1) * itemsPerPage, currentPage * itemsPerPage)
+
+  // 當資料變更時重置頁碼
+  useEffect(() => {
+    setCurrentPage(1)
+  }, [movements.length])
+
   if (movements.length === 0) {
     return (
       <div className="text-center py-12">
@@ -725,79 +833,85 @@ function MovementsTable({ movements }: { movements: InventoryMovement[] }) {
   }
 
   return (
-    <div className="overflow-x-auto">
-      <table className="min-w-full divide-y divide-gray-200 dark:divide-gray-700">
-        <thead className="bg-gray-50 dark:bg-gray-900">
-          <tr>
-            <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 dark:text-gray-400 uppercase tracking-wider">
-              產品
-            </th>
-            <th className="px-6 py-3 text-center text-xs font-medium text-gray-500 dark:text-gray-400 uppercase tracking-wider">
-              尺寸
-            </th>
-            <th className="px-6 py-3 text-center text-xs font-medium text-gray-500 dark:text-gray-400 uppercase tracking-wider">
-              異動類型
-            </th>
-            <th className="px-6 py-3 text-center text-xs font-medium text-gray-500 dark:text-gray-400 uppercase tracking-wider">
-              數量變化
-            </th>
-            <th className="px-6 py-3 text-center text-xs font-medium text-gray-500 dark:text-gray-400 uppercase tracking-wider">
-              庫存變化
-            </th>
-            <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 dark:text-gray-400 uppercase tracking-wider">
-              備註
-            </th>
-            <th className="px-6 py-3 text-center text-xs font-medium text-gray-500 dark:text-gray-400 uppercase tracking-wider">
-              時間
-            </th>
-          </tr>
-        </thead>
-        <tbody className="bg-white dark:bg-gray-800 divide-y divide-gray-200 dark:divide-gray-700">
-          {movements.map((movement) => (
-            <tr key={movement.id} className="hover:bg-gray-50 dark:hover:bg-gray-700 transition-colors">
-              <td className="px-6 py-4 whitespace-nowrap text-sm font-medium text-gray-900 dark:text-gray-100">
-                {movement.product?.product_name || '-'}
-              </td>
-              <td className="px-6 py-4 whitespace-nowrap text-center text-sm text-gray-600 dark:text-gray-400">
-                {movement.size || '-'}
-              </td>
-              <td className="px-6 py-4 whitespace-nowrap text-center">
-                <span className={`inline-flex px-2 py-1 text-xs font-semibold rounded-full ${
-                  movement.movement_type === 'stock_in'
-                    ? 'bg-green-100 dark:bg-green-900 text-green-800 dark:text-green-200'
-                    : movement.movement_type === 'sale'
-                      ? 'bg-red-100 dark:bg-red-900 text-red-800 dark:text-red-200'
-                      : 'bg-blue-100 dark:bg-blue-900 text-blue-800 dark:text-blue-200'
-                }`}>
-                  {movement.movement_type === 'stock_in' ? '進貨' :
-                   movement.movement_type === 'sale' ? '銷售' : '調整'}
-                </span>
-              </td>
-              <td className="px-6 py-4 whitespace-nowrap text-center">
-                <span className={`font-medium ${
-                  movement.quantity > 0 ? 'text-green-600 dark:text-green-400' : 'text-red-600 dark:text-red-400'
-                }`}>
-                  {movement.quantity > 0 ? '+' : ''}{movement.quantity}
-                </span>
-              </td>
-              <td className="px-6 py-4 whitespace-nowrap text-center text-sm text-gray-500 dark:text-gray-400">
-                {movement.previous_total} → {movement.current_total}
-              </td>
-              <td className="px-6 py-4 text-sm text-gray-500 dark:text-gray-400 max-w-xs">
-                <div className="truncate" title={movement.note || ''}>
-                  {movement.note || '-'}
-                </div>
-              </td>
-              <td className="px-6 py-4 whitespace-nowrap text-center text-sm text-gray-500 dark:text-gray-400">
-                {new Date(movement.created_at).toLocaleDateString('zh-TW')}
-                <div className="text-xs">
-                  {new Date(movement.created_at).toLocaleTimeString('zh-TW')}
-                </div>
-              </td>
+    <div>
+      <div className="overflow-x-auto">
+        <table className="min-w-full divide-y divide-gray-200 dark:divide-gray-700">
+          <thead className="bg-gray-50 dark:bg-gray-900">
+            <tr>
+              <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 dark:text-gray-400 uppercase tracking-wider">
+                產品
+              </th>
+              <th className="px-6 py-3 text-center text-xs font-medium text-gray-500 dark:text-gray-400 uppercase tracking-wider">
+                尺寸
+              </th>
+              <th className="px-6 py-3 text-center text-xs font-medium text-gray-500 dark:text-gray-400 uppercase tracking-wider">
+                異動類型
+              </th>
+              <th className="px-6 py-3 text-center text-xs font-medium text-gray-500 dark:text-gray-400 uppercase tracking-wider">
+                數量變化
+              </th>
+              <th className="px-6 py-3 text-center text-xs font-medium text-gray-500 dark:text-gray-400 uppercase tracking-wider">
+                庫存變化
+              </th>
+              <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 dark:text-gray-400 uppercase tracking-wider">
+                備註
+              </th>
+              <th className="px-6 py-3 text-center text-xs font-medium text-gray-500 dark:text-gray-400 uppercase tracking-wider">
+                時間
+              </th>
             </tr>
-          ))}
-        </tbody>
-      </table>
+          </thead>
+          <tbody className="bg-white dark:bg-gray-800 divide-y divide-gray-200 dark:divide-gray-700">
+            {paginatedMovements.map((movement) => (
+              <tr key={movement.id} className="hover:bg-gray-50 dark:hover:bg-gray-700 transition-colors">
+                <td className="px-6 py-4 whitespace-nowrap text-sm font-medium text-gray-900 dark:text-gray-100">
+                  {movement.product?.product_name || '-'}
+                </td>
+                <td className="px-6 py-4 whitespace-nowrap text-center text-sm text-gray-600 dark:text-gray-400">
+                  {movement.size || '-'}
+                </td>
+                <td className="px-6 py-4 whitespace-nowrap text-center">
+                  <span className={`inline-flex px-2 py-1 text-xs font-semibold rounded-full ${
+                    movement.movement_type === 'stock_in'
+                      ? 'bg-green-100 dark:bg-green-900 text-green-800 dark:text-green-200'
+                      : movement.movement_type === 'sale'
+                        ? 'bg-red-100 dark:bg-red-900 text-red-800 dark:text-red-200'
+                        : 'bg-blue-100 dark:bg-blue-900 text-blue-800 dark:text-blue-200'
+                  }`}>
+                    {movement.movement_type === 'stock_in' ? '進貨' :
+                     movement.movement_type === 'sale' ? '銷售' : '調整'}
+                  </span>
+                </td>
+                <td className="px-6 py-4 whitespace-nowrap text-center">
+                  <span className={`font-medium ${
+                    movement.quantity > 0 ? 'text-green-600 dark:text-green-400' : 'text-red-600 dark:text-red-400'
+                  }`}>
+                    {movement.quantity > 0 ? '+' : ''}{movement.quantity}
+                  </span>
+                </td>
+                <td className="px-6 py-4 whitespace-nowrap text-center text-sm text-gray-500 dark:text-gray-400">
+                  {movement.previous_total} → {movement.current_total}
+                </td>
+                <td className="px-6 py-4 text-sm text-gray-500 dark:text-gray-400 max-w-xs">
+                  <div className="truncate" title={movement.note || ''}>
+                    {movement.note || '-'}
+                  </div>
+                </td>
+                <td className="px-6 py-4 whitespace-nowrap text-center text-sm text-gray-500 dark:text-gray-400">
+                  {new Date(movement.created_at).toLocaleDateString('zh-TW')}
+                  <div className="text-xs">
+                    {new Date(movement.created_at).toLocaleTimeString('zh-TW')}
+                  </div>
+                </td>
+              </tr>
+            ))}
+          </tbody>
+        </table>
+      </div>
+      <div className="mt-2 text-xs sm:text-sm text-gray-500 dark:text-gray-400 text-center">
+        共 {movements.length} 筆資料，第 {currentPage} / {totalPages} 頁
+      </div>
+      <Pagination currentPage={currentPage} totalPages={totalPages} onPageChange={setCurrentPage} />
     </div>
   )
 }
