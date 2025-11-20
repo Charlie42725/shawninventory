@@ -94,8 +94,8 @@ export default function InventoryPage() {
         ? `/api/inventory?category_id=${selectedCategory}`
         : '/api/inventory'
       const stockInUrl = selectedCategory
-        ? `/api/inventory/stock-in?category_id=${selectedCategory}`
-        : '/api/inventory/stock-in'
+        ? `/api/inventory/stock-in?category_id=${selectedCategory}&limit=500`
+        : '/api/inventory/stock-in?limit=500'
       const movementsUrl = '/api/inventory/movements?limit=50'
 
       const [categoriesRes, productsRes, stockInRes, movementsRes] = await Promise.all([
