@@ -427,9 +427,8 @@ export async function GET(request: Request) {
       const product = products.find(p => p.id === sale.product_id);
       if (product && product.avg_unit_cost) {
         costOfGoods += product.avg_unit_cost * (sale.quantity || 0);
-      } else {
-        costOfGoods += (sale.unit_price || 0) * 0.6 * (sale.quantity || 0);
       }
+      // If no matching product found, cost is 0 (don't estimate)
     });
 
     const grossProfit = currentRevenue - costOfGoods;

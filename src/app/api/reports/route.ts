@@ -12,11 +12,8 @@ function calculateSalesCostFromInventory(sales: any[], products: any[]) {
     if (product && product.avg_unit_cost) {
       // Use average unit cost from products table
       totalSalesCost += (product.avg_unit_cost * sale.quantity);
-    } else {
-      // If no matching product found, estimate cost as 60% of selling price
-      const salePrice = sale.unit_price || 0;
-      totalSalesCost += (salePrice * 0.6 * sale.quantity);
     }
+    // If no matching product found, cost is 0 (don't estimate)
   }
 
   return totalSalesCost;
