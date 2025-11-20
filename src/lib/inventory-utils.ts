@@ -228,10 +228,13 @@ export async function processSale(saleData: {
       newSizeStock[saleData.size] = (newSizeStock[saleData.size] || 0) - saleData.quantity
     }
 
-    // 計算新的成本 (按比例減少)
-    const costReductionRatio = newTotalStock / product.total_stock
-    const newTotalCostValue = product.total_cost_value * costReductionRatio
-    const newAvgUnitCost = newTotalStock > 0 ? newTotalCostValue / newTotalStock : product.avg_unit_cost
+    // 計算新的成本 (扣減實際銷售的成本)
+    // 使用加權平均成本，銷售成本 = 平均單位成本 × 銷售數量
+    const costOfGoodsSold = product.avg_unit_cost * saleData.quantity
+    const newTotalCostValue = Math.max(0, product.total_cost_value - costOfGoodsSold)
+
+    // 平均成本保持不變（除非庫存清空）
+    const newAvgUnitCost = newTotalStock > 0 ? product.avg_unit_cost : 0
 
     const { error: updateError } = await supabaseAdmin
       .from('products')
