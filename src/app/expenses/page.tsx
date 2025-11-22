@@ -19,7 +19,7 @@ export default function ExpensesPage() {
   const [loading, setLoading] = useState(true)
   const [search, setSearch] = useState('')
   const [categoryFilter, setCategoryFilter] = useState('all')
-  const [dateRange, setDateRange] = useState('month')
+  const [dateRange, setDateRange] = useState('all')
 
   useEffect(() => {
     fetchExpenses()
@@ -85,13 +85,17 @@ export default function ExpensesPage() {
 
   // 統計資訊
   const totalExpenses = filteredExpenses.reduce((sum, expense) => sum + expense.amount, 0)
-  const expensesByCategory = EXPENSE_CATEGORIES.map(category => ({
+  
+  // 獲取資料中實際出現的類別
+  const activeCategories = Array.from(new Set(filteredExpenses.map(e => e.category)))
+  
+  const expensesByCategory = activeCategories.map(category => ({
     category,
     amount: filteredExpenses
       .filter(e => e.category === category)
       .reduce((sum, e) => sum + e.amount, 0),
     count: filteredExpenses.filter(e => e.category === category).length
-  })).filter(item => item.amount > 0)
+  })).sort((a, b) => b.amount - a.amount)
 
   if (loading) {
     return (
@@ -107,183 +111,128 @@ export default function ExpensesPage() {
     <ProtectedLayout>
       <div className="max-w-7xl mx-auto px-3 sm:px-6 lg:px-8 py-6 space-y-6">
         {/* Header */}
-        <div className="flex flex-col sm:flex-row items-start sm:items-center justify-between gap-3">
+        <div className="flex flex-col sm:flex-row items-start sm:items-center justify-between gap-4">
           <div>
-            <h1 className="text-2xl sm:text-3xl font-extrabold text-gray-900 dark:text-gray-100 leading-tight flex items-center gap-2">
-              <svg className="w-7 h-7 sm:w-8 sm:h-8" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M17 9V7a2 2 0 00-2-2H5a2 2 0 00-2 2v6a2 2 0 002 2h2m2 4h10a2 2 0 002-2v-6a2 2 0 00-2-2H9a2 2 0 00-2 2v6a2 2 0 002 2zm7-5a2 2 0 11-4 0 2 2 0 014 0z" />
-              </svg>
-              營運支出
-            </h1>
-            <p className="mt-1 text-sm text-gray-500 dark:text-gray-400">管理與檢視所有營運相關支出，快速篩選與匯出報表。</p>
+            <h1 className="text-2xl sm:text-3xl font-bold text-gray-900 dark:text-gray-100">營運支出</h1>
+            <p className="mt-1 text-sm text-gray-500 dark:text-gray-400">管理與檢視所有營運相關支出</p>
           </div>
 
-          <div className="flex items-center gap-3 w-full sm:w-auto">
+          <div className="flex items-center gap-2 w-full sm:w-auto">
             <Link
               href="/reports"
-              className="hidden sm:inline-flex items-center gap-2 px-4 py-2 rounded-lg bg-white/80 dark:bg-gray-800/80 border border-gray-200 dark:border-gray-700 shadow-sm hover:shadow-md text-sm font-medium text-gray-800 dark:text-gray-100 transition"
+              className="flex-1 sm:flex-initial inline-flex items-center justify-center gap-2 px-4 py-2 rounded-lg bg-white dark:bg-gray-800 border border-gray-300 dark:border-gray-600 text-sm font-medium text-gray-700 dark:text-gray-200 hover:bg-gray-50 dark:hover:bg-gray-700 transition-colors"
             >
-              <svg className="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+              <svg className="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
                 <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M9 17v-2m3 2v-4m3 4v-6m2 10H7a2 2 0 01-2-2V5a2 2 0 012-2h5.586a1 1 0 01.707.293l5.414 5.414a1 1 0 01.293.707V19a2 2 0 01-2 2z" />
               </svg>
-              <span>財務報表</span>
+              報表
             </Link>
 
             <Link
               href="/expenses/new"
-              className="inline-flex items-center gap-2 px-4 py-2 rounded-lg bg-gradient-to-r from-green-600 to-green-700 text-white text-sm font-semibold shadow hover:shadow-lg transition"
+              className="flex-1 sm:flex-initial inline-flex items-center justify-center gap-2 px-4 py-2 rounded-lg bg-indigo-600 text-white text-sm font-medium hover:bg-indigo-700 transition-colors shadow-sm"
             >
-              <span className="text-lg">＋</span>
-              <span>新增支出</span>
+              <svg className="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M12 4v16m8-8H4" />
+              </svg>
+              新增支出
             </Link>
           </div>
         </div>
 
         {/* Summary cards */}
-        <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-4">
-          <div className="p-4 bg-white dark:bg-gray-800 rounded-xl shadow-sm border border-gray-100 dark:border-gray-700">
-            <div className="flex items-center justify-between">
-              <div>
-                <div className="text-xs font-medium text-gray-500">筆數</div>
-                <div className="mt-2 text-2xl font-bold text-gray-900 dark:text-gray-100">{filteredExpenses.length}</div>
-                <div className="text-xs text-gray-400 mt-1">總支出筆數</div>
-              </div>
-              <div className="w-12 h-12 rounded-lg bg-purple-600 flex items-center justify-center">
-                <svg className="w-6 h-6 text-white" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                  <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M9 5H7a2 2 0 00-2 2v12a2 2 0 002 2h10a2 2 0 002-2V7a2 2 0 00-2-2h-2M9 5a2 2 0 002 2h2a2 2 0 002-2M9 5a2 2 0 012-2h2a2 2 0 012 2m-3 7h3m-3 4h3m-6-4h.01M9 16h.01" />
-                </svg>
-              </div>
-            </div>
+        <div className="grid grid-cols-2 lg:grid-cols-4 gap-3 sm:gap-4">
+          <div className="bg-white dark:bg-gray-800 rounded-lg border border-gray-200 dark:border-gray-700 p-4 hover:border-gray-300 dark:hover:border-gray-600 transition-colors">
+            <div className="text-xs font-medium text-gray-500 dark:text-gray-400 mb-1">總筆數</div>
+            <div className="text-2xl font-bold text-gray-900 dark:text-gray-100">{filteredExpenses.length}</div>
           </div>
 
-          <div className="p-4 bg-white dark:bg-gray-800 rounded-xl shadow-sm border border-gray-100 dark:border-gray-700">
-            <div className="flex items-center justify-between">
-              <div>
-                <div className="text-xs font-medium text-gray-500">總額</div>
-                <div className="mt-2 text-2xl font-bold text-red-600">${totalExpenses.toLocaleString()}</div>
-                <div className="text-xs text-gray-400 mt-1">總支出金額</div>
-              </div>
-              <div className="w-12 h-12 rounded-lg bg-red-600 flex items-center justify-center">
-                <svg className="w-6 h-6 text-white" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                  <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M12 8c-1.657 0-3 .895-3 2s1.343 2 3 2 3 .895 3 2-1.343 2-3 2m0-8c1.11 0 2.08.402 2.599 1M12 8V7m0 1v8m0 0v1m0-1c-1.11 0-2.08-.402-2.599-1M21 12a9 9 0 11-18 0 9 9 0 0118 0z" />
-                </svg>
-              </div>
-            </div>
+          <div className="bg-white dark:bg-gray-800 rounded-lg border border-gray-200 dark:border-gray-700 p-4 hover:border-gray-300 dark:hover:border-gray-600 transition-colors">
+            <div className="text-xs font-medium text-gray-500 dark:text-gray-400 mb-1">總支出</div>
+            <div className="text-2xl font-bold text-red-600 dark:text-red-500">${totalExpenses.toLocaleString()}</div>
           </div>
 
-          <div className="p-4 bg-white dark:bg-gray-800 rounded-xl shadow-sm border border-gray-100 dark:border-gray-700">
-            <div className="flex items-center justify-between">
-              <div>
-                <div className="text-xs font-medium text-gray-500">平均</div>
-                <div className="mt-2 text-2xl font-bold text-blue-900">${filteredExpenses.length > 0 ? Math.round(totalExpenses / filteredExpenses.length).toLocaleString() : 0}</div>
-                <div className="text-xs text-gray-400 mt-1">平均支出額</div>
-              </div>
-              <div className="w-12 h-12 rounded-lg bg-blue-600 flex items-center justify-center">
-                <svg className="w-6 h-6 text-white" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                  <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M9 19v-6a2 2 0 00-2-2H5a2 2 0 00-2 2v6a2 2 0 002 2h2a2 2 0 002-2zm0 0V9a2 2 0 012-2h2a2 2 0 012 2v10m-6 0a2 2 0 002 2h2a2 2 0 002-2m0 0V5a2 2 0 012-2h2a2 2 0 012 2v14a2 2 0 01-2 2h-2a2 2 0 01-2-2z" />
-                </svg>
-              </div>
-            </div>
+          <div className="bg-white dark:bg-gray-800 rounded-lg border border-gray-200 dark:border-gray-700 p-4 hover:border-gray-300 dark:hover:border-gray-600 transition-colors">
+            <div className="text-xs font-medium text-gray-500 dark:text-gray-400 mb-1">平均金額</div>
+            <div className="text-2xl font-bold text-gray-900 dark:text-gray-100">${filteredExpenses.length > 0 ? Math.round(totalExpenses / filteredExpenses.length).toLocaleString() : 0}</div>
           </div>
 
-          <div className="p-4 bg-white dark:bg-gray-800 rounded-xl shadow-sm border border-gray-100 dark:border-gray-700">
-            <div className="flex items-center justify-between">
-              <div>
-                <div className="text-xs font-medium text-gray-500">類別</div>
-                <div className="mt-2 text-lg font-bold text-gray-900 dark:text-gray-100 truncate">{expensesByCategory.length > 0 ? expensesByCategory.sort((a,b)=>b.amount-a.amount)[0].category : '-'}</div>
-                <div className="text-xs text-gray-400 mt-1">主要支出類別</div>
-              </div>
-              <div className="w-12 h-12 rounded-lg bg-indigo-600 flex items-center justify-center">
-                <svg className="w-6 h-6 text-white" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                  <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M7 7h.01M7 3h5c.512 0 1.024.195 1.414.586l7 7a2 2 0 010 2.828l-7 7a2 2 0 01-2.828 0l-7-7A1.994 1.994 0 013 12V7a4 4 0 014-4z" />
-                </svg>
-              </div>
-            </div>
+          <div className="bg-white dark:bg-gray-800 rounded-lg border border-gray-200 dark:border-gray-700 p-4 hover:border-gray-300 dark:hover:border-gray-600 transition-colors">
+            <div className="text-xs font-medium text-gray-500 dark:text-gray-400 mb-1">主要類別</div>
+            <div className="text-lg font-bold text-gray-900 dark:text-gray-100 truncate">{expensesByCategory.length > 0 ? expensesByCategory.sort((a,b)=>b.amount-a.amount)[0].category : '-'}</div>
           </div>
         </div>
 
         {/* Filters & search */}
-        <div className="bg-white dark:bg-gray-800 p-4 sm:p-5 rounded-xl shadow-sm border border-gray-100 dark:border-gray-700">
-          <div className="grid grid-cols-1 md:grid-cols-3 lg:grid-cols-6 gap-3">
-            <div className="md:col-span-2 lg:col-span-3">
-              <label className="block text-xs font-medium text-gray-600 dark:text-gray-300 mb-1">搜尋</label>
-              <div className="relative">
-                <input
-                  type="text"
-                  placeholder="搜尋支出描述或備註..."
-                  value={search}
-                  onChange={(e) => setSearch(e.target.value)}
-                  className="w-full pl-10 pr-3 py-2.5 rounded-lg border border-gray-200 dark:border-gray-600 bg-white dark:bg-gray-700 text-sm text-gray-900 dark:text-gray-100 focus:outline-none focus:ring-2 focus:ring-indigo-500"
-                />
-                <svg className="absolute left-3 top-1/2 -translate-y-1/2 h-5 w-5 text-gray-400" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                  <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M21 21l-6-6m2-5a7 7 0 11-14 0 7 7 0 0114 0z" />
-                </svg>
-              </div>
-            </div>
-
-            <div>
-              <label className="block text-xs font-medium text-gray-600 dark:text-gray-300 mb-1">類別</label>
-              <select
-                value={categoryFilter}
-                onChange={(e) => setCategoryFilter(e.target.value)}
-                className="w-full px-3 py-2.5 rounded-lg border border-gray-200 dark:border-gray-600 bg-white dark:bg-gray-700 text-sm text-gray-900 dark:text-gray-100 focus:outline-none focus:ring-2 focus:ring-indigo-500"
-              >
-                <option value="all">所有類別</option>
-                {EXPENSE_CATEGORIES.map((category) => (
-                  <option key={category} value={category}>{category}</option>
-                ))}
-              </select>
-            </div>
-
-            <div>
-              <label className="block text-xs font-medium text-gray-600 dark:text-gray-300 mb-1">時間</label>
-              <select
-                value={dateRange}
-                onChange={(e) => setDateRange(e.target.value)}
-                className="w-full px-3 py-2.5 rounded-lg border border-gray-200 dark:border-gray-600 bg-white dark:bg-gray-700 text-sm text-gray-900 dark:text-gray-100 focus:outline-none focus:ring-2 focus:ring-indigo-500"
-              >
-                <option value="all">所有時間</option>
-                <option value="week">最近一週</option>
-                <option value="month">最近一個月</option>
-              </select>
+        <div className="flex flex-col sm:flex-row gap-3">
+          <div className="flex-1">
+            <div className="relative">
+              <input
+                type="text"
+                placeholder="搜尋支出描述或備註..."
+                value={search}
+                onChange={(e) => setSearch(e.target.value)}
+                className="w-full pl-10 pr-4 py-2.5 rounded-lg border border-gray-300 dark:border-gray-600 bg-white dark:bg-gray-800 text-sm text-gray-900 dark:text-gray-100 placeholder-gray-400 dark:placeholder-gray-500 focus:outline-none focus:ring-2 focus:ring-indigo-500 focus:border-transparent"
+              />
+              <svg className="absolute left-3 top-1/2 -translate-y-1/2 h-5 w-5 text-gray-400" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M21 21l-6-6m2-5a7 7 0 11-14 0 7 7 0 0114 0z" />
+              </svg>
             </div>
           </div>
+
+          <select
+            value={categoryFilter}
+            onChange={(e) => setCategoryFilter(e.target.value)}
+            className="w-full sm:w-40 px-4 py-2.5 rounded-lg border border-gray-300 dark:border-gray-600 bg-white dark:bg-gray-800 text-sm text-gray-900 dark:text-gray-100 focus:outline-none focus:ring-2 focus:ring-indigo-500 focus:border-transparent"
+          >
+            <option value="all">所有類別</option>
+            {Array.from(new Set([...EXPENSE_CATEGORIES, ...expenses.map(e => e.category)])).map((category) => (
+              <option key={category} value={category}>{category}</option>
+            ))}
+          </select>
+
+          <select
+            value={dateRange}
+            onChange={(e) => setDateRange(e.target.value)}
+            className="w-full sm:w-40 px-4 py-2.5 rounded-lg border border-gray-300 dark:border-gray-600 bg-white dark:bg-gray-800 text-sm text-gray-900 dark:text-gray-100 focus:outline-none focus:ring-2 focus:ring-indigo-500 focus:border-transparent"
+          >
+            <option value="all">所有時間</option>
+            <option value="week">最近一週</option>
+            <option value="month">最近一個月</option>
+          </select>
         </div>
 
         {/* Category breakdown */}
         {expensesByCategory.length > 0 && (
-          <div className="bg-white dark:bg-gray-800 rounded-xl p-4 sm:p-6 shadow-sm border border-gray-100 dark:border-gray-700">
+          <div className="bg-white dark:bg-gray-800 rounded-lg border border-gray-200 dark:border-gray-700 p-4 sm:p-5">
             <div className="flex items-center justify-between mb-4">
-              <h3 className="text-base font-semibold text-gray-900 dark:text-gray-100 flex items-center gap-2">
-                <svg className="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                  <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M9 5H7a2 2 0 00-2 2v12a2 2 0 002 2h10a2 2 0 002-2V7a2 2 0 00-2-2h-2M9 5a2 2 0 002 2h2a2 2 0 002-2M9 5a2 2 0 012-2h2a2 2 0 012 2m-3 7h3m-3 4h3m-6-4h.01M9 16h.01" />
-                </svg>
-                支出分類統計
-              </h3>
-              <div className="text-xs text-gray-500 dark:text-gray-400">{expensesByCategory.length} 類別</div>
+              <h3 className="text-base font-semibold text-gray-900 dark:text-gray-100">分類統計</h3>
+              <div className="text-xs text-gray-500 dark:text-gray-400">{expensesByCategory.length} 個類別</div>
             </div>
-            <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-3">
+            <div className="space-y-3">
               {expensesByCategory.sort((a, b) => b.amount - a.amount).map((item, index) => {
                 const percentage = totalExpenses > 0 ? ((item.amount / totalExpenses) * 100) : 0
                 return (
-                  <div key={item.category} className="p-3 bg-gray-50 dark:bg-gray-700 rounded-lg border border-gray-100 dark:border-gray-600">
-                    <div className="flex items-start justify-between mb-2">
-                      <div className="flex items-center gap-2">
-                        {index === 0 && (
-                          <svg className="w-4 h-4 text-yellow-500" fill="currentColor" viewBox="0 0 24 24">
-                            <path d="M12 2l3.09 6.26L22 9.27l-5 4.87 1.18 6.88L12 17.77l-6.18 3.25L7 14.14 2 9.27l6.91-1.01L12 2z" />
-                          </svg>
-                        )}
-                        <div className="text-sm font-semibold text-gray-900 dark:text-gray-100">{item.category}</div>
+                  <div key={item.category} className="flex items-center gap-3">
+                    <div className="flex-1">
+                      <div className="flex items-center justify-between mb-1.5">
+                        <div className="flex items-center gap-2">
+                          {index === 0 && (
+                            <svg className="w-3.5 h-3.5 text-yellow-500" fill="currentColor" viewBox="0 0 24 24">
+                              <path d="M12 2l3.09 6.26L22 9.27l-5 4.87 1.18 6.88L12 17.77l-6.18 3.25L7 14.14 2 9.27l6.91-1.01L12 2z" />
+                            </svg>
+                          )}
+                          <span className="text-sm font-medium text-gray-900 dark:text-gray-100">{item.category}</span>
+                          <span className="text-xs text-gray-500 dark:text-gray-400">({item.count})</span>
+                        </div>
+                        <div className="flex items-center gap-3">
+                          <span className="text-sm font-semibold text-gray-900 dark:text-gray-100">${item.amount.toLocaleString()}</span>
+                          <span className="text-xs font-medium text-indigo-600 dark:text-indigo-400 w-12 text-right">{percentage.toFixed(1)}%</span>
+                        </div>
                       </div>
-                      <div className="text-xs text-gray-500 dark:text-gray-400">{item.count} 筆</div>
-                    </div>
-                    <div className="text-lg font-bold text-gray-900 dark:text-gray-100 mb-1">${item.amount.toLocaleString()}</div>
-                    <div className="flex items-center gap-2">
-                      <div className="flex-1 bg-gray-200 dark:bg-gray-600 rounded-full h-2 overflow-hidden">
-                        <div className="bg-indigo-600 h-full rounded-full" style={{ width: `${Math.min(percentage, 100)}%` }} />
+                      <div className="bg-gray-100 dark:bg-gray-700 rounded-full h-1.5 overflow-hidden">
+                        <div className="bg-indigo-600 dark:bg-indigo-500 h-full rounded-full transition-all" style={{ width: `${Math.min(percentage, 100)}%` }} />
                       </div>
-                      <div className="text-xs font-semibold text-indigo-600 dark:text-indigo-300">{percentage.toFixed(1)}%</div>
                     </div>
                   </div>
                 )
@@ -293,65 +242,44 @@ export default function ExpensesPage() {
         )}
 
         {/* Expenses list / table */}
-        <div className="bg-white dark:bg-gray-800 rounded-xl shadow-sm border border-gray-100 dark:border-gray-700 overflow-hidden">
-          <div className="px-4 py-3 border-b border-gray-100 dark:border-gray-700 bg-gray-50 dark:bg-gray-900/40">
+        <div className="bg-white dark:bg-gray-800 rounded-lg border border-gray-200 dark:border-gray-700 overflow-hidden">
+          <div className="px-4 sm:px-5 py-3 border-b border-gray-200 dark:border-gray-700">
             <div className="flex items-center justify-between">
-              <h3 className="text-base font-semibold text-gray-900 dark:text-gray-100 flex items-center gap-2">
-                <svg className="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                  <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M9 12h6m-6 4h6m2 5H7a2 2 0 01-2-2V5a2 2 0 012-2h5.586a1 1 0 01.707.293l5.414 5.414a1 1 0 01.293.707V19a2 2 0 01-2 2z" />
-                </svg>
-                支出明細
-              </h3>
+              <h3 className="text-base font-semibold text-gray-900 dark:text-gray-100">支出明細</h3>
               <div className="text-sm text-gray-500 dark:text-gray-400">{filteredExpenses.length} 筆</div>
             </div>
           </div>
 
           {/* Mobile card view */}
-          <div className="md:hidden divide-y divide-gray-100 dark:divide-gray-700">
+          <div className="md:hidden divide-y divide-gray-200 dark:divide-gray-700">
             {filteredExpenses.length > 0 ? (
               filteredExpenses.map((expense) => (
-                <div key={expense.id} className="p-4 flex flex-col gap-3 hover:bg-gray-50 dark:hover:bg-gray-700/50 transition-colors">
-                  <div className="flex items-start justify-between gap-3">
+                <div key={expense.id} className="p-4 hover:bg-gray-50 dark:hover:bg-gray-700/30 transition-colors">
+                  <div className="flex items-start justify-between gap-3 mb-2">
                     <div className="flex-1">
-                      <div className="flex items-center gap-2">
-                        <span className={`inline-flex items-center px-2.5 py-1 rounded-full text-xs font-semibold ${getCategoryColor(expense.category)}`}>{expense.category}</span>
-                        <div className="text-sm text-gray-500 dark:text-gray-400 flex items-center gap-1">
-                          <svg className="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                            <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M8 7V3m8 4V3m-9 8h10M5 21h14a2 2 0 002-2V7a2 2 0 00-2-2H5a2 2 0 00-2 2v12a2 2 0 002 2z" />
-                          </svg>
-                          {new Date(expense.date).toLocaleDateString('zh-TW')}
-                        </div>
+                      <div className="flex items-center gap-2 flex-wrap mb-1">
+                        <span className={`inline-flex items-center px-2 py-0.5 rounded-md text-xs font-medium ${getCategoryColor(expense.category)}`}>{expense.category}</span>
+                        <span className="text-xs text-gray-500 dark:text-gray-400">{new Date(expense.date).toLocaleDateString('zh-TW')}</span>
                       </div>
                       {expense.note && (
-                        <div className="mt-2 text-sm text-gray-700 dark:text-gray-300 bg-gray-50 dark:bg-gray-800 p-2 rounded-lg flex items-start gap-2">
-                          <svg className="w-4 h-4 mt-0.5 flex-shrink-0" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                            <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M7 8h10M7 12h4m1 8l-4-4H5a2 2 0 01-2-2V6a2 2 0 012-2h14a2 2 0 012 2v8a2 2 0 01-2 2h-3l-4 4z" />
-                          </svg>
-                          {expense.note}
-                        </div>
+                        <p className="text-sm text-gray-600 dark:text-gray-400 mt-1.5">{expense.note}</p>
                       )}
                     </div>
-                    <div className="flex flex-col items-end">
-                      <div className="text-xl font-bold text-red-600 dark:text-red-500">${expense.amount.toLocaleString()}</div>
-                      <div className="flex gap-2 mt-3">
-                        <Link href={`/expenses/edit/${expense.id}`} className="px-3 py-1 rounded-md text-sm bg-indigo-50 dark:bg-indigo-900/30 text-indigo-700 dark:text-indigo-300 inline-flex items-center gap-1">
-                          <svg className="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                            <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M11 5H6a2 2 0 00-2 2v11a2 2 0 002 2h11a2 2 0 002-2v-5m-1.414-9.414a2 2 0 112.828 2.828L11.828 15H9v-2.828l8.586-8.586z" />
-                          </svg>
-                        </Link>
-                        <button onClick={() => handleDelete(expense.id, expense.category)} className="px-3 py-1 rounded-md text-sm bg-red-50 dark:bg-red-900/30 text-red-700 dark:text-red-300 inline-flex items-center gap-1">
-                          <svg className="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                            <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M19 7l-.867 12.142A2 2 0 0116.138 21H7.862a2 2 0 01-1.995-1.858L5 7m5 4v6m4-6v6m1-10V4a1 1 0 00-1-1h-4a1 1 0 00-1 1v3M4 7h16" />
-                          </svg>
-                        </button>
-                      </div>
-                    </div>
+                    <div className="text-lg font-bold text-red-600 dark:text-red-500 whitespace-nowrap">${expense.amount.toLocaleString()}</div>
+                  </div>
+                  <div className="flex gap-2 pt-2">
+                    <Link href={`/expenses/edit/${expense.id}`} className="flex-1 px-3 py-1.5 rounded-md text-xs text-center bg-gray-100 dark:bg-gray-700 text-gray-700 dark:text-gray-300 hover:bg-gray-200 dark:hover:bg-gray-600 transition-colors">
+                      編輯
+                    </Link>
+                    <button onClick={() => handleDelete(expense.id, expense.category)} className="flex-1 px-3 py-1.5 rounded-md text-xs text-center bg-red-50 dark:bg-red-900/30 text-red-700 dark:text-red-300 hover:bg-red-100 dark:hover:bg-red-900/50 transition-colors">
+                      刪除
+                    </button>
                   </div>
                 </div>
               ))
             ) : (
-              <div className="p-8 text-center">
-                <svg className="mx-auto h-12 w-12 text-gray-400" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+              <div className="p-12 text-center">
+                <svg className="mx-auto h-12 w-12 text-gray-300 dark:text-gray-600 mb-3" fill="none" stroke="currentColor" viewBox="0 0 24 24">
                   <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={1.5} d="M20 13V6a2 2 0 00-2-2H6a2 2 0 00-2 2v7m16 0v5a2 2 0 01-2 2H6a2 2 0 01-2-2v-5m16 0h-2.586a1 1 0 00-.707.293l-2.414 2.414a1 1 0 01-.707.293h-3.172a1 1 0 01-.707-.293l-2.414-2.414A1 1 0 006.586 13H4" />
                 </svg>
                 <p className="text-sm text-gray-500 dark:text-gray-400">{search || categoryFilter !== 'all' ? '沒有符合條件的支出記錄' : '目前沒有支出記錄'}</p>
@@ -374,9 +302,9 @@ export default function ExpensesPage() {
               <tbody className="bg-white dark:bg-gray-800 divide-y divide-gray-200 dark:divide-gray-700">
                 {filteredExpenses.length > 0 ? (
                   filteredExpenses.map((expense) => (
-                    <tr key={expense.id} className="hover:bg-gray-50 dark:hover:bg-gray-700/50 transition-colors">
+                    <tr key={expense.id} className="hover:bg-gray-50 dark:hover:bg-gray-700/30 transition-colors">
                       <td className="px-6 py-4 whitespace-nowrap text-sm text-gray-900 dark:text-gray-100">{new Date(expense.date).toLocaleDateString('zh-TW')}</td>
-                      <td className="px-6 py-4 whitespace-nowrap"><span className={`inline-flex items-center px-2.5 py-1 rounded-full text-xs font-semibold ${getCategoryColor(expense.category)}`}>{expense.category}</span></td>
+                      <td className="px-6 py-4 whitespace-nowrap"><span className={`inline-flex items-center px-2.5 py-0.5 rounded-md text-xs font-medium ${getCategoryColor(expense.category)}`}>{expense.category}</span></td>
                       <td className="px-6 py-4 text-sm text-gray-700 dark:text-gray-300 max-w-xs truncate">{expense.note || '-'}</td>
                       <td className="px-6 py-4 whitespace-nowrap text-sm font-bold text-red-600 dark:text-red-500">${expense.amount.toLocaleString()}</td>
                       <td className="px-6 py-4 whitespace-nowrap text-center text-sm font-medium">
