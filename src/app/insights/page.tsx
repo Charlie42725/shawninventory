@@ -51,7 +51,12 @@ export default function InsightsPage() {
       <div className="space-y-4 sm:space-y-6 px-2 sm:px-0">
         {/* 標題 */}
         <div className="flex flex-col space-y-2">
-          <h1 className="text-2xl sm:text-3xl font-bold text-gray-900 dark:text-gray-100">🤖 AI 財務分析洞察</h1>
+          <h1 className="text-2xl sm:text-3xl font-bold text-gray-900 dark:text-gray-100 flex items-center gap-2">
+            <svg className="w-6 h-6 sm:w-8 sm:h-8 text-indigo-600 dark:text-indigo-400" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+              <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M9.75 17L9 20l-1 1h8l-1-1-.75-3M3 13h18M5 17h14a2 2 0 002-2V5a2 2 0 00-2-2H5a2 2 0 00-2 2v10a2 2 0 002 2z" />
+            </svg>
+            AI 財務分析洞察
+          </h1>
           <p className="text-sm sm:text-base text-gray-600 dark:text-gray-400">使用 Google Gemini AI 深度分析您的財務數據,獲取專業建議</p>
         </div>
 
@@ -151,7 +156,12 @@ export default function InsightsPage() {
                   AI 分析中...
                 </span>
               ) : (
-                '🤖 開始 AI 分析'
+                <span className="flex items-center gap-2">
+                  <svg className="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                    <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M9.75 17L9 20l-1 1h8l-1-1-.75-3M3 13h18M5 17h14a2 2 0 002-2V5a2 2 0 00-2-2H5a2 2 0 00-2 2v10a2 2 0 002 2z" />
+                  </svg>
+                  開始 AI 分析
+                </span>
               )}
             </button>
           </div>
@@ -161,7 +171,9 @@ export default function InsightsPage() {
         {error && (
           <div className="bg-red-50 dark:bg-red-900/20 border border-red-200 dark:border-red-800 rounded-lg p-3 sm:p-4 transition-colors">
             <div className="flex items-start sm:items-center">
-              <span className="text-red-600 dark:text-red-400 text-base sm:text-lg mr-2 flex-shrink-0">⚠️</span>
+              <svg className="w-5 h-5 sm:w-6 sm:h-6 text-red-600 dark:text-red-400 flex-shrink-0 mr-2" fill="currentColor" viewBox="0 0 24 24">
+                <path d="M12 2L1 21h22L12 2zm0 3.99L19.53 19H4.47L12 5.99zM11 16h2v2h-2v-2zm0-6h2v4h-2v-4z" />
+              </svg>
               <p className="text-sm sm:text-base text-red-800 dark:text-red-300 break-words">{error}</p>
             </div>
           </div>
@@ -172,8 +184,10 @@ export default function InsightsPage() {
           <div className="space-y-4 sm:space-y-6">
             {/* AI 分析總結 */}
             <div className="bg-gradient-to-br from-indigo-50 to-purple-50 dark:from-indigo-900/20 dark:to-purple-900/20 border border-indigo-200 dark:border-indigo-800 rounded-lg p-4 sm:p-6 transition-colors">
-              <h2 className="text-lg sm:text-xl font-bold text-indigo-900 dark:text-indigo-300 mb-3 sm:mb-4 flex items-center">
-                <span className="text-xl sm:text-2xl mr-2">🤖</span>
+              <h2 className="text-lg sm:text-xl font-bold text-indigo-900 dark:text-indigo-300 mb-3 sm:mb-4 flex items-center gap-2">
+                <svg className="w-6 h-6 sm:w-7 sm:h-7 text-indigo-600 dark:text-indigo-400" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                  <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M9.75 17L9 20l-1 1h8l-1-1-.75-3M3 13h18M5 17h14a2 2 0 002-2V5a2 2 0 00-2-2H5a2 2 0 00-2 2v10a2 2 0 002 2z" />
+                </svg>
                 AI 深度分析
               </h2>
               <div className="prose prose-indigo max-w-none">
@@ -186,14 +200,18 @@ export default function InsightsPage() {
             {/* 建議事項 */}
             {result.recommendations && result.recommendations.length > 0 && (
               <div className="bg-green-50 dark:bg-green-900/20 border border-green-200 dark:border-green-800 rounded-lg p-4 sm:p-6 transition-colors">
-                <h3 className="text-base sm:text-lg font-bold text-green-900 dark:text-green-300 mb-3 sm:mb-4 flex items-center">
-                  <span className="text-lg sm:text-xl mr-2">✅</span>
+                <h3 className="text-base sm:text-lg font-bold text-green-900 dark:text-green-300 mb-3 sm:mb-4 flex items-center gap-2">
+                  <svg className="w-5 h-5 sm:w-6 sm:h-6 text-green-600 dark:text-green-400" fill="currentColor" viewBox="0 0 24 24">
+                    <path d="M9 16.17L4.83 12l-1.42 1.41L9 19 21 7l-1.41-1.41L9 16.17z" />
+                  </svg>
                   行動建議
                 </h3>
                 <ul className="space-y-2 sm:space-y-3">
                   {result.recommendations.map((rec, index) => (
                     <li key={index} className="flex items-start">
-                      <span className="text-green-600 dark:text-green-400 mr-2 mt-1 flex-shrink-0">•</span>
+                      <svg className="w-4 h-4 sm:w-5 sm:h-5 text-green-600 dark:text-green-400 mr-2 mt-0.5 flex-shrink-0" fill="currentColor" viewBox="0 0 24 24">
+                        <circle cx="12" cy="12" r="4" />
+                      </svg>
                       <span className="text-sm sm:text-base text-gray-800 dark:text-gray-200">{rec}</span>
                     </li>
                   ))}
@@ -204,14 +222,18 @@ export default function InsightsPage() {
             {/* 風險警示 */}
             {result.risks && result.risks.length > 0 && (
               <div className="bg-red-50 dark:bg-red-900/20 border border-red-200 dark:border-red-800 rounded-lg p-4 sm:p-6 transition-colors">
-                <h3 className="text-base sm:text-lg font-bold text-red-900 dark:text-red-300 mb-3 sm:mb-4 flex items-center">
-                  <span className="text-lg sm:text-xl mr-2">⚠️</span>
+                <h3 className="text-base sm:text-lg font-bold text-red-900 dark:text-red-300 mb-3 sm:mb-4 flex items-center gap-2">
+                  <svg className="w-5 h-5 sm:w-6 sm:h-6 text-red-600 dark:text-red-400" fill="currentColor" viewBox="0 0 24 24">
+                    <path d="M12 2L1 21h22L12 2zm0 3.99L19.53 19H4.47L12 5.99zM11 16h2v2h-2v-2zm0-6h2v4h-2v-4z" />
+                  </svg>
                   風險警示
                 </h3>
                 <ul className="space-y-2 sm:space-y-3">
                   {result.risks.map((risk, index) => (
                     <li key={index} className="flex items-start">
-                      <span className="text-red-600 dark:text-red-400 mr-2 mt-1 flex-shrink-0">•</span>
+                      <svg className="w-4 h-4 sm:w-5 sm:h-5 text-red-600 dark:text-red-400 mr-2 mt-0.5 flex-shrink-0" fill="currentColor" viewBox="0 0 24 24">
+                        <circle cx="12" cy="12" r="4" />
+                      </svg>
                       <span className="text-sm sm:text-base text-gray-800 dark:text-gray-200">{risk}</span>
                     </li>
                   ))}
@@ -222,14 +244,18 @@ export default function InsightsPage() {
             {/* 成長機會 */}
             {result.opportunities && result.opportunities.length > 0 && (
               <div className="bg-blue-50 dark:bg-blue-900/20 border border-blue-200 dark:border-blue-800 rounded-lg p-4 sm:p-6 transition-colors">
-                <h3 className="text-base sm:text-lg font-bold text-blue-900 dark:text-blue-300 mb-3 sm:mb-4 flex items-center">
-                  <span className="text-lg sm:text-xl mr-2">🚀</span>
+                <h3 className="text-base sm:text-lg font-bold text-blue-900 dark:text-blue-300 mb-3 sm:mb-4 flex items-center gap-2">
+                  <svg className="w-5 h-5 sm:w-6 sm:h-6 text-blue-600 dark:text-blue-400" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                    <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M13 10V3L4 14h7v7l9-11h-7z" />
+                  </svg>
                   成長機會
                 </h3>
                 <ul className="space-y-2 sm:space-y-3">
                   {result.opportunities.map((opp, index) => (
                     <li key={index} className="flex items-start">
-                      <span className="text-blue-600 dark:text-blue-400 mr-2 mt-1 flex-shrink-0">•</span>
+                      <svg className="w-4 h-4 sm:w-5 sm:h-5 text-blue-600 dark:text-blue-400 mr-2 mt-0.5 flex-shrink-0" fill="currentColor" viewBox="0 0 24 24">
+                        <circle cx="12" cy="12" r="4" />
+                      </svg>
                       <span className="text-sm sm:text-base text-gray-800 dark:text-gray-200">{opp}</span>
                     </li>
                   ))}
@@ -242,7 +268,12 @@ export default function InsightsPage() {
         {/* 使用說明 */}
         {!result && !analyzing && (
           <div className="bg-gray-50 dark:bg-gray-800 border border-gray-200 dark:border-gray-700 rounded-lg p-4 sm:p-6 transition-colors">
-            <h3 className="text-base sm:text-lg font-medium text-gray-900 dark:text-gray-100 mb-3">💡 使用說明</h3>
+            <h3 className="text-base sm:text-lg font-medium text-gray-900 dark:text-gray-100 mb-3 flex items-center gap-2">
+              <svg className="w-5 h-5 sm:w-6 sm:h-6 text-yellow-500 dark:text-yellow-400" fill="currentColor" viewBox="0 0 24 24">
+                <path d="M12 2C6.48 2 2 6.48 2 12s4.48 10 10 10 10-4.48 10-10S17.52 2 12 2zm1 15h-2v-6h2v6zm0-8h-2V7h2v2z" />
+              </svg>
+              使用說明
+            </h3>
             <ul className="space-y-2 text-sm sm:text-base text-gray-700 dark:text-gray-300">
               <li className="flex items-start">
                 <span className="text-indigo-600 mr-2 font-medium flex-shrink-0">1.</span>

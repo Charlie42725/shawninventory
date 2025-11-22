@@ -376,7 +376,10 @@ ${detectedColumns.join(', ')}
       {/* 設定和文件選擇 */}
       <div className="flex items-center gap-4">
         <label className="bg-blue-600 hover:bg-blue-700 text-white px-4 py-2 rounded-md text-sm font-medium cursor-pointer flex items-center gap-2">
-          📊 匯入 Excel
+          <svg className="w-4 h-4 sm:w-5 sm:h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+            <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M9 19v-6a2 2 0 00-2-2H5a2 2 0 00-2 2v6a2 2 0 002 2h2a2 2 0 002-2zm0 0V9a2 2 0 012-2h2a2 2 0 012 2v10m-6 0a2 2 0 002 2h2a2 2 0 002-2m0 0V5a2 2 0 012-2h2a2 2 0 012 2v14a2 2 0 01-2 2h-2a2 2 0 01-2-2z" />
+          </svg>
+          匯入 Excel
           <input
             type="file"
             accept=".xlsx,.xls,.csv"
@@ -444,17 +447,20 @@ ${detectedColumns.join(', ')}
           </h3>
           
           {/* 統計信息 */}
-          <div className="mb-4 p-3 bg-blue-50 rounded-lg">
-            <div className="text-sm text-gray-600">
-              📊 資料統計：
-              <span className="ml-2 font-semibold text-blue-800">
+          <div className="mb-4 p-3 bg-blue-50 dark:bg-blue-900/20 rounded-lg">
+            <div className="text-sm text-gray-600 dark:text-gray-400 flex items-center gap-2">
+              <svg className="w-4 h-4 text-blue-600 dark:text-blue-400" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M9 19v-6a2 2 0 00-2-2H5a2 2 0 00-2 2v6a2 2 0 002 2h2a2 2 0 002-2zm0 0V9a2 2 0 012-2h2a2 2 0 012 2v10m-6 0a2 2 0 002 2h2a2 2 0 002-2m0 0V5a2 2 0 012-2h2a2 2 0 012 2v14a2 2 0 01-2 2h-2a2 2 0 01-2-2z" />
+              </svg>
+              資料統計：
+              <span className="ml-2 font-semibold text-blue-800 dark:text-blue-300">
                 {new Set(allData.map(sale => sale.order_number)).size} 個不重複訂單
               </span>
-              <span className="ml-2 font-semibold text-green-800">
+              <span className="ml-2 font-semibold text-green-800 dark:text-green-300">
                 {allData.length} 項產品
               </span>
               {allData.length > new Set(allData.map(sale => sale.order_number)).size && (
-                <span className="ml-2 text-orange-600">
+                <span className="ml-2 text-orange-600 dark:text-orange-400">
                   (包含多項產品訂單)
                 </span>
               )}

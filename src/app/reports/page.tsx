@@ -114,7 +114,12 @@ export default function ReportsPage() {
     <ProtectedLayout>
       <div className="space-y-4 sm:space-y-6 px-2 sm:px-0">
         <div className="flex justify-between items-center">
-          <h1 className="text-2xl sm:text-3xl font-bold text-gray-900 dark:text-gray-100">📄 損益報表</h1>
+          <h1 className="text-2xl sm:text-3xl font-bold text-gray-900 dark:text-gray-100 flex items-center gap-2">
+            <svg className="w-6 h-6 sm:w-8 sm:h-8 text-gray-600 dark:text-gray-400" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+              <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M9 12h6m-6 4h6m2 5H7a2 2 0 01-2-2V5a2 2 0 012-2h5.586a1 1 0 01.707.293l5.414 5.414a1 1 0 01.293.707V19a2 2 0 01-2 2z" />
+            </svg>
+            損益報表
+          </h1>
         </div>
 
         {/* 操作區域 */}
@@ -199,14 +204,44 @@ export default function ReportsPage() {
               disabled={exporting}
               className="bg-green-600 hover:bg-green-700 disabled:bg-green-400 text-white px-4 py-2 rounded-md text-sm font-medium"
             >
-              {exporting ? '導出中...' : '📊 導出 Excel'}
+              {exporting ? (
+                <span className="flex items-center gap-2">
+                  <svg className="animate-spin h-4 w-4 sm:h-5 sm:h-5" viewBox="0 0 24 24">
+                    <circle className="opacity-25" cx="12" cy="12" r="10" stroke="currentColor" strokeWidth="4" fill="none" />
+                    <path className="opacity-75" fill="currentColor" d="M4 12a8 8 0 018-8V0C5.373 0 0 5.373 0 12h4zm2 5.291A7.962 7.962 0 014 12H0c0 3.042 1.135 5.824 3 7.938l3-2.647z" />
+                  </svg>
+                  導出中...
+                </span>
+              ) : (
+                <span className="flex items-center gap-2">
+                  <svg className="w-4 h-4 sm:w-5 sm:h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                    <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M9 19v-6a2 2 0 00-2-2H5a2 2 0 00-2 2v6a2 2 0 002 2h2a2 2 0 002-2zm0 0V9a2 2 0 012-2h2a2 2 0 012 2v10m-6 0a2 2 0 002 2h2a2 2 0 002-2m0 0V5a2 2 0 012-2h2a2 2 0 012 2v14a2 2 0 01-2 2h-2a2 2 0 01-2-2z" />
+                  </svg>
+                  導出 Excel
+                </span>
+              )}
             </button>
             <button
               onClick={() => handleExport('pdf')}
               disabled={exporting}
               className="bg-red-600 hover:bg-red-700 disabled:bg-red-400 text-white px-4 py-2 rounded-md text-sm font-medium"
             >
-              {exporting ? '導出中...' : '📄 導出 PDF'}
+              {exporting ? (
+                <span className="flex items-center gap-2">
+                  <svg className="animate-spin h-4 w-4 sm:h-5 sm:h-5" viewBox="0 0 24 24">
+                    <circle className="opacity-25" cx="12" cy="12" r="10" stroke="currentColor" strokeWidth="4" fill="none" />
+                    <path className="opacity-75" fill="currentColor" d="M4 12a8 8 0 018-8V0C5.373 0 0 5.373 0 12h4zm2 5.291A7.962 7.962 0 014 12H0c0 3.042 1.135 5.824 3 7.938l3-2.647z" />
+                  </svg>
+                  導出中...
+                </span>
+              ) : (
+                <span className="flex items-center gap-2">
+                  <svg className="w-4 h-4 sm:w-5 sm:h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                    <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M7 21h10a2 2 0 002-2V9.414a1 1 0 00-.293-.707l-5.414-5.414A1 1 0 0012.586 3H7a2 2 0 00-2 2v14a2 2 0 002 2z" />
+                  </svg>
+                  導出 PDF
+                </span>
+              )}
             </button>
           </div>
         </div>
@@ -260,7 +295,12 @@ export default function ReportsPage() {
 
         {/* 損益表格 */}
         <div className="bg-white dark:bg-gray-800 p-4 sm:p-6 rounded-lg shadow-sm transition-colors">
-          <h3 className="text-base sm:text-lg font-medium text-gray-900 dark:text-gray-100 mb-3 sm:mb-4">📊 損益明細表</h3>
+          <h3 className="text-base sm:text-lg font-medium text-gray-900 dark:text-gray-100 mb-3 sm:mb-4 flex items-center gap-2">
+            <svg className="w-5 h-5 sm:w-6 sm:h-6 text-gray-600 dark:text-gray-400" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+              <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M9 19v-6a2 2 0 00-2-2H5a2 2 0 00-2 2v6a2 2 0 002 2h2a2 2 0 002-2zm0 0V9a2 2 0 012-2h2a2 2 0 012 2v10m-6 0a2 2 0 002 2h2a2 2 0 002-2m0 0V5a2 2 0 012-2h2a2 2 0 012 2v14a2 2 0 01-2 2h-2a2 2 0 01-2-2z" />
+            </svg>
+            損益明細表
+          </h3>
           <div className="space-y-4">
             {/* 收入部分 */}
             <div className="border-b border-gray-200 dark:border-gray-700 pb-3">
@@ -316,7 +356,12 @@ export default function ReportsPage() {
 
         {/* 成本分解 */}
         <div className="bg-white dark:bg-gray-800 p-6 rounded-lg shadow-sm transition-colors">
-          <h3 className="text-lg font-medium text-gray-900 dark:text-gray-100 mb-4">💰 成本與費用分析</h3>
+          <h3 className="text-lg font-medium text-gray-900 dark:text-gray-100 mb-4 flex items-center gap-2">
+            <svg className="w-5 h-5 sm:w-6 sm:h-6 text-gray-600 dark:text-gray-400" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+              <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M12 8c-1.657 0-3 .895-3 2s1.343 2 3 2 3 .895 3 2-1.343 2-3 2m0-8c1.11 0 2.08.402 2.599 1M12 8V7m0 1v8m0 0v1m0-1c-1.11 0-2.08-.402-2.599-1M21 12a9 9 0 11-18 0 9 9 0 0118 0z" />
+            </svg>
+            成本與費用分析
+          </h3>
           <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
             <div className="text-center p-4 bg-orange-50 dark:bg-orange-900/20 rounded-lg transition-colors">
               <p className="text-sm font-medium text-gray-700 dark:text-gray-300 mb-1">銷售成本 (COGS)</p>
@@ -360,7 +405,12 @@ export default function ReportsPage() {
 
         {/* 熱銷產品 */}
         <div className="bg-white dark:bg-gray-800 shadow-sm rounded-lg p-4 sm:p-6 transition-colors">
-          <h3 className="text-base sm:text-lg font-medium text-gray-900 dark:text-gray-100 mb-3 sm:mb-4">🏆 熱銷產品排行</h3>
+          <h3 className="text-base sm:text-lg font-medium text-gray-900 dark:text-gray-100 mb-3 sm:mb-4 flex items-center gap-2">
+            <svg className="w-5 h-5 sm:w-6 sm:h-6 text-yellow-500 dark:text-yellow-400" fill="currentColor" viewBox="0 0 24 24">
+              <path d="M12 2L15.09 8.26L22 9.27L17 14.14L18.18 21.02L12 17.77L5.82 21.02L7 14.14L2 9.27L8.91 8.26L12 2Z" />
+            </svg>
+            熱銷產品排行
+          </h3>
           <div className="overflow-x-auto -mx-2 sm:mx-0">
             <table className="min-w-full">
               <thead>
@@ -376,11 +426,30 @@ export default function ReportsPage() {
                 {reportData.topProducts.map((product, index) => (
                   <tr key={product.model} className="border-b border-gray-200 dark:border-gray-700 hover:bg-gray-50 dark:hover:bg-gray-700 transition-colors">
                     <td className="py-3 px-4">
-                      <span className="flex items-center">
-                        {index === 0 && '🥇'}
-                        {index === 1 && '🥈'}
-                        {index === 2 && '🥉'}
-                        <span className="ml-2 font-semibold text-gray-900 dark:text-gray-100">{index + 1}</span>
+                      <span className="flex items-center gap-2">
+                        {index === 0 && (
+                          <svg className="w-5 h-5 sm:w-6 sm:h-6" viewBox="0 0 24 24" fill="none">
+                            <circle cx="12" cy="12" r="10" fill="#FFD700" />
+                            <text x="12" y="17" textAnchor="middle" fontSize="12" fontWeight="bold" fill="#8B4513">1</text>
+                          </svg>
+                        )}
+                        {index === 1 && (
+                          <svg className="w-5 h-5 sm:w-6 sm:h-6" viewBox="0 0 24 24" fill="none">
+                            <circle cx="12" cy="12" r="10" fill="#C0C0C0" />
+                            <text x="12" y="17" textAnchor="middle" fontSize="12" fontWeight="bold" fill="#4A4A4A">2</text>
+                          </svg>
+                        )}
+                        {index === 2 && (
+                          <svg className="w-5 h-5 sm:w-6 sm:h-6" viewBox="0 0 24 24" fill="none">
+                            <circle cx="12" cy="12" r="10" fill="#CD7F32" />
+                            <text x="12" y="17" textAnchor="middle" fontSize="12" fontWeight="bold" fill="#FFFFFF">3</text>
+                          </svg>
+                        )}
+                        {index > 2 && (
+                          <span className="w-5 h-5 sm:w-6 sm:h-6 flex items-center justify-center text-gray-500 dark:text-gray-400 font-semibold">
+                            {index + 1}
+                          </span>
+                        )}
                       </span>
                     </td>
                     <td className="py-3 px-4 font-semibold text-gray-900 dark:text-gray-100">{product.model || 'Unknown'}</td>
@@ -401,7 +470,12 @@ export default function ReportsPage() {
 
         {/* 月度趨勢 */}
         <div className="bg-white dark:bg-gray-800 shadow-sm rounded-lg p-4 sm:p-6 transition-colors">
-          <h3 className="text-base sm:text-lg font-medium text-gray-900 dark:text-gray-100 mb-3 sm:mb-4">📈 月度財務趨勢</h3>
+          <h3 className="text-base sm:text-lg font-medium text-gray-900 dark:text-gray-100 mb-3 sm:mb-4 flex items-center gap-2">
+            <svg className="w-5 h-5 sm:w-6 sm:h-6 text-gray-600 dark:text-gray-400" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+              <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M13 7h8m0 0v8m0-8l-8 8-4-4-6 6" />
+            </svg>
+            月度財務趨勢
+          </h3>
           <div className="overflow-x-auto -mx-2 sm:mx-0">
             <table className="min-w-full">
               <thead>
