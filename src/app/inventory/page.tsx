@@ -200,12 +200,53 @@ export default function InventoryPage() {
     )
   }
 
+  // 計算 FIFO 現貨價值
+  const calculateFIFOValue = () => {
+    let totalFIFOValue = 0
+
+    // 對每個產品計算 FIFO 價值
+    products.forEach(product => {
+      // 找出這個產品的所有進貨記錄（按日期排序）
+      const productStockIns = stockInRecords
+        .filter(record =>
+          record.product_name === product.product_name &&
+          record.color === product.color &&
+          record.ip_category === product.ip_category &&
+          record.category_id === product.category_id
+        )
+        .sort((a, b) => new Date(a.date).getTime() - new Date(b.date).getTime())
+
+      // 如果沒有進貨記錄，使用平均成本
+      if (productStockIns.length === 0) {
+        totalFIFOValue += product.total_cost_value
+        return
+      }
+
+      // FIFO 邏輯：從最舊的進貨開始配對當前庫存
+      let remainingStock = product.total_stock
+      let fifoValue = 0
+
+      // 從最新的進貨記錄開始往回算（LIFO 反向 = FIFO 的剩餘）
+      // 實際上應該用 FIFO：先進的先賣出，所以剩下的是最新進的
+      for (let i = productStockIns.length - 1; i >= 0 && remainingStock > 0; i--) {
+        const stockIn = productStockIns[i]
+        const availableQty = Math.min(stockIn.total_quantity, remainingStock)
+        fifoValue += availableQty * stockIn.unit_cost
+        remainingStock -= availableQty
+      }
+
+      totalFIFOValue += fifoValue
+    })
+
+    return totalFIFOValue
+  }
+
   // 計算庫存統計
   const inventoryStats = {
     total: products.length,
-    lowStock: products.filter(p => p.total_stock > 0 && p.total_stock < 10).length,
-    outOfStock: products.filter(p => p.total_stock === 0).length,
-    totalValue: products.reduce((sum, p) => sum + p.total_cost_value, 0)
+    totalValue: products.reduce((sum, p) => sum + p.total_cost_value, 0), // 加權平均成本
+    fifoValue: calculateFIFOValue(), // FIFO 現貨價值
+    totalStock: products.reduce((sum, p) => sum + p.total_stock, 0)
   }
 
   return (
@@ -227,7 +268,7 @@ export default function InventoryPage() {
         </div>
 
         {/* 庫存統計卡片 */}
-        <div className="grid grid-cols-2 lg:grid-cols-4 gap-3 sm:gap-4 md:gap-6">
+        <div className="grid grid-cols-1 sm:grid-cols-3 gap-3 sm:gap-4 md:gap-6">
           <div className="bg-white dark:bg-gray-800 overflow-hidden shadow rounded-lg transition-colors">
             <div className="p-3 sm:p-5">
               <div className="flex items-center">
@@ -250,32 +291,15 @@ export default function InventoryPage() {
             <div className="p-3 sm:p-5">
               <div className="flex items-center">
                 <div className="flex-shrink-0">
-                  <div className="w-7 h-7 sm:w-8 sm:h-8 bg-yellow-500 rounded-md flex items-center justify-center">
-                    <span className="text-white text-xs sm:text-sm">⚠️</span>
+                  <div className="w-7 h-7 sm:w-8 sm:h-8 bg-indigo-500 rounded-md flex items-center justify-center">
+                    <span className="text-white text-xs sm:text-sm">📊</span>
                   </div>
                 </div>
                 <div className="ml-3 sm:ml-5 w-0 flex-1">
                   <dl>
-                    <dt className="text-xs sm:text-sm font-medium text-gray-500 dark:text-gray-400 truncate">低庫存</dt>
-                    <dd className="text-base sm:text-lg font-medium text-yellow-600 dark:text-yellow-500">{inventoryStats.lowStock}</dd>
-                  </dl>
-                </div>
-              </div>
-            </div>
-          </div>
-
-          <div className="bg-white dark:bg-gray-800 overflow-hidden shadow rounded-lg transition-colors">
-            <div className="p-3 sm:p-5">
-              <div className="flex items-center">
-                <div className="flex-shrink-0">
-                  <div className="w-7 h-7 sm:w-8 sm:h-8 bg-red-500 rounded-md flex items-center justify-center">
-                    <span className="text-white text-xs sm:text-sm">🚫</span>
-                  </div>
-                </div>
-                <div className="ml-3 sm:ml-5 w-0 flex-1">
-                  <dl>
-                    <dt className="text-xs sm:text-sm font-medium text-gray-500 dark:text-gray-400 truncate">缺貨</dt>
-                    <dd className="text-base sm:text-lg font-medium text-red-600 dark:text-red-500">{inventoryStats.outOfStock}</dd>
+                    <dt className="text-xs sm:text-sm font-medium text-gray-500 dark:text-gray-400 truncate">存貨總價值</dt>
+                    <dd className="text-base sm:text-lg font-medium text-indigo-600 dark:text-indigo-500">${inventoryStats.totalValue.toFixed(2)}</dd>
+                    <dd className="text-xs text-gray-400 dark:text-gray-500 mt-0.5">加權平均成本</dd>
                   </dl>
                 </div>
               </div>
@@ -292,8 +316,9 @@ export default function InventoryPage() {
                 </div>
                 <div className="ml-3 sm:ml-5 w-0 flex-1">
                   <dl>
-                    <dt className="text-xs sm:text-sm font-medium text-gray-500 dark:text-gray-400 truncate">庫存總值</dt>
-                    <dd className="text-base sm:text-lg font-medium text-green-600 dark:text-green-500">${inventoryStats.totalValue.toFixed(2)}</dd>
+                    <dt className="text-xs sm:text-sm font-medium text-gray-500 dark:text-gray-400 truncate">現貨價值</dt>
+                    <dd className="text-base sm:text-lg font-medium text-green-600 dark:text-green-500">${inventoryStats.fifoValue.toFixed(2)}</dd>
+                    <dd className="text-xs text-gray-400 dark:text-gray-500 mt-0.5">實際進貨成本</dd>
                   </dl>
                 </div>
               </div>
