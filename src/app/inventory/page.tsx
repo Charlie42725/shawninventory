@@ -81,6 +81,8 @@ export default function InventoryPage() {
     name: '',
     type: 'product'
   })
+  const [inventorySearch, setInventorySearch] = useState('')
+  const [stockInSearch, setStockInSearch] = useState('')
 
   useEffect(() => {
     fetchData()
@@ -392,14 +394,63 @@ export default function InventoryPage() {
 
           <div className="p-3 sm:p-6">
             {activeTab === 'inventory' && (
-              <InventoryTable
-                products={products}
-                onEdit={setEditingProduct}
-                onDelete={handleDeleteProduct}
-              />
+              <div className="space-y-4">
+                {/* 搜尋框 */}
+                <div className="flex items-center gap-2">
+                  <div className="relative flex-1">
+                    <input
+                      type="text"
+                      value={inventorySearch}
+                      onChange={(e) => setInventorySearch(e.target.value)}
+                      placeholder="搜尋產品名稱、顏色或IP..."
+                      className="w-full px-4 py-2 pl-10 border border-gray-300 dark:border-gray-600 rounded-md focus:outline-none focus:ring-2 focus:ring-indigo-500 text-gray-900 dark:text-gray-100 bg-white dark:bg-gray-700 transition-colors"
+                    />
+                    <svg className="absolute left-3 top-2.5 h-5 w-5 text-gray-400" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                      <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M21 21l-6-6m2-5a7 7 0 11-14 0 7 7 0 0114 0z" />
+                    </svg>
+                  </div>
+                  {inventorySearch && (
+                    <button
+                      onClick={() => setInventorySearch('')}
+                      className="px-3 py-2 text-sm text-gray-700 dark:text-gray-300 bg-gray-200 dark:bg-gray-700 rounded-md hover:bg-gray-300 dark:hover:bg-gray-600 transition-colors whitespace-nowrap"
+                    >
+                      清除
+                    </button>
+                  )}
+                </div>
+                <InventoryTable
+                  products={products}
+                  onEdit={setEditingProduct}
+                  onDelete={handleDeleteProduct}
+                  searchQuery={inventorySearch}
+                />
+              </div>
             )}
             {activeTab === 'stock-in' && (
               <div className="space-y-4">
+                {/* 搜尋框 */}
+                <div className="flex items-center gap-2">
+                  <div className="relative flex-1">
+                    <input
+                      type="text"
+                      value={stockInSearch}
+                      onChange={(e) => setStockInSearch(e.target.value)}
+                      placeholder="搜尋產品名稱、顏色或備註..."
+                      className="w-full px-4 py-2 pl-10 border border-gray-300 dark:border-gray-600 rounded-md focus:outline-none focus:ring-2 focus:ring-indigo-500 text-gray-900 dark:text-gray-100 bg-white dark:bg-gray-700 transition-colors"
+                    />
+                    <svg className="absolute left-3 top-2.5 h-5 w-5 text-gray-400" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                      <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M21 21l-6-6m2-5a7 7 0 11-14 0 7 7 0 0114 0z" />
+                    </svg>
+                  </div>
+                  {stockInSearch && (
+                    <button
+                      onClick={() => setStockInSearch('')}
+                      className="px-3 py-2 text-sm text-gray-700 dark:text-gray-300 bg-gray-200 dark:bg-gray-700 rounded-md hover:bg-gray-300 dark:hover:bg-gray-600 transition-colors whitespace-nowrap"
+                    >
+                      清除
+                    </button>
+                  )}
+                </div>
                 {/* 日期篩選 */}
                 <div className="flex flex-col sm:flex-row gap-3 sm:gap-4">
                   <div className="flex-1">
@@ -436,6 +487,7 @@ export default function InventoryPage() {
                   onDelete={handleDeleteStockIn}
                   onEdit={setEditingStockIn}
                   dateFilter={dateFilter}
+                  searchQuery={stockInSearch}
                 />
               </div>
             )}
@@ -570,21 +622,36 @@ function Pagination({
 function InventoryTable({
   products,
   onEdit,
-  onDelete
+  onDelete,
+  searchQuery
 }: {
   products: Product[]
   onEdit: (product: Product) => void
   onDelete: (id: number, name: string) => void
+  searchQuery: string
 }) {
   const [currentPage, setCurrentPage] = useState(1)
   const itemsPerPage = 50
-  const totalPages = Math.ceil(products.length / itemsPerPage)
-  const paginatedProducts = products.slice((currentPage - 1) * itemsPerPage, currentPage * itemsPerPage)
 
-  // 當資料變更時重置頁碼
+  // 搜尋過濾
+  const filteredProducts = products.filter(product => {
+    if (!searchQuery) return true
+    const query = searchQuery.toLowerCase()
+    return (
+      product.product_name.toLowerCase().includes(query) ||
+      (product.color && product.color.toLowerCase().includes(query)) ||
+      (product.ip_category && product.ip_category.toLowerCase().includes(query)) ||
+      (product.category?.name && product.category.name.toLowerCase().includes(query))
+    )
+  })
+
+  const totalPages = Math.ceil(filteredProducts.length / itemsPerPage)
+  const paginatedProducts = filteredProducts.slice((currentPage - 1) * itemsPerPage, currentPage * itemsPerPage)
+
+  // 當資料或搜尋變更時重置頁碼
   useEffect(() => {
     setCurrentPage(1)
-  }, [products.length])
+  }, [products.length, searchQuery])
 
   if (products.length === 0) {
     return (
@@ -592,6 +659,18 @@ function InventoryTable({
         <span className="text-4xl">📦</span>
         <h3 className="mt-2 text-sm font-medium text-gray-900 dark:text-gray-100">尚無庫存資料</h3>
         <p className="mt-1 text-sm text-gray-500 dark:text-gray-400">請先進行進貨操作或手動新增產品</p>
+      </div>
+    )
+  }
+
+  if (filteredProducts.length === 0) {
+    return (
+      <div className="text-center py-12">
+        <svg className="mx-auto h-12 w-12 text-gray-400" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+          <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={1.5} d="M21 21l-6-6m2-5a7 7 0 11-14 0 7 7 0 0114 0z" />
+        </svg>
+        <h3 className="mt-4 text-sm font-medium text-gray-900 dark:text-gray-100">找不到符合的產品</h3>
+        <p className="mt-1 text-sm text-gray-500 dark:text-gray-400">請嘗試其他搜尋關鍵字</p>
       </div>
     )
   }
@@ -696,7 +775,11 @@ function InventoryTable({
         </table>
       </div>
       <div className="mt-2 text-xs sm:text-sm text-gray-500 dark:text-gray-400 text-center">
-        共 {products.length} 筆資料，第 {currentPage} / {totalPages} 頁
+        {searchQuery ? (
+          <>顯示 {filteredProducts.length} 筆 (共 {products.length} 筆)，第 {currentPage} / {totalPages} 頁</>
+        ) : (
+          <>共 {products.length} 筆資料，第 {currentPage} / {totalPages} 頁</>
+        )}
       </div>
       <Pagination currentPage={currentPage} totalPages={totalPages} onPageChange={setCurrentPage} />
     </div>
@@ -708,24 +791,40 @@ function StockInTable({
   records,
   onDelete,
   onEdit,
-  dateFilter
+  dateFilter,
+  searchQuery
 }: {
   records: StockInRecord[]
   onDelete: (id: number, name: string) => void
   onEdit: (record: StockInRecord) => void
   dateFilter: { startDate: string; endDate: string }
+  searchQuery: string
 }) {
   const [currentPage, setCurrentPage] = useState(1)
   const itemsPerPage = 50
 
-  // 日期篩選
+  // 日期篩選和搜尋過濾
   const filteredRecords = records.filter((record) => {
+    // 日期篩選
     const recordDate = new Date(record.date)
     const start = dateFilter.startDate ? new Date(dateFilter.startDate) : null
     const end = dateFilter.endDate ? new Date(dateFilter.endDate) : null
 
     if (start && recordDate < start) return false
     if (end && recordDate > end) return false
+
+    // 搜尋過濾
+    if (searchQuery) {
+      const query = searchQuery.toLowerCase()
+      return (
+        record.product_name.toLowerCase().includes(query) ||
+        (record.color && record.color.toLowerCase().includes(query)) ||
+        (record.ip_category && record.ip_category.toLowerCase().includes(query)) ||
+        (record.note && record.note.toLowerCase().includes(query)) ||
+        (record.category?.name && record.category.name.toLowerCase().includes(query))
+      )
+    }
+
     return true
   })
 
@@ -735,15 +834,27 @@ function StockInTable({
   // 當篩選變更時重置頁碼
   useEffect(() => {
     setCurrentPage(1)
-  }, [dateFilter.startDate, dateFilter.endDate, records.length])
+  }, [dateFilter.startDate, dateFilter.endDate, records.length, searchQuery])
 
-  if (filteredRecords.length === 0) {
+  if (records.length === 0) {
     return (
       <div className="text-center py-12">
         <span className="text-4xl">📝</span>
         <h3 className="mt-2 text-sm font-medium text-gray-900 dark:text-gray-100">尚無進貨記錄</h3>
+        <p className="mt-1 text-sm text-gray-500 dark:text-gray-400">進貨記錄會顯示在這裡</p>
+      </div>
+    )
+  }
+
+  if (filteredRecords.length === 0) {
+    return (
+      <div className="text-center py-12">
+        <svg className="mx-auto h-12 w-12 text-gray-400" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+          <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={1.5} d="M21 21l-6-6m2-5a7 7 0 11-14 0 7 7 0 0114 0z" />
+        </svg>
+        <h3 className="mt-4 text-sm font-medium text-gray-900 dark:text-gray-100">找不到符合的記錄</h3>
         <p className="mt-1 text-sm text-gray-500 dark:text-gray-400">
-          {dateFilter.startDate || dateFilter.endDate ? '沒有符合篩選條件的記錄' : '進貨記錄會顯示在這裡'}
+          {searchQuery ? '請嘗試其他搜尋關鍵字' : '沒有符合篩選條件的記錄'}
         </p>
       </div>
     )
@@ -845,7 +956,11 @@ function StockInTable({
         </table>
       </div>
       <div className="mt-2 text-xs sm:text-sm text-gray-500 dark:text-gray-400 text-center">
-        共 {filteredRecords.length} 筆資料，第 {currentPage} / {totalPages} 頁
+        {(searchQuery || dateFilter.startDate || dateFilter.endDate) ? (
+          <>顯示 {filteredRecords.length} 筆 (共 {records.length} 筆)，第 {currentPage} / {totalPages} 頁</>
+        ) : (
+          <>共 {records.length} 筆資料，第 {currentPage} / {totalPages} 頁</>
+        )}
       </div>
       <Pagination currentPage={currentPage} totalPages={totalPages} onPageChange={setCurrentPage} />
     </div>
