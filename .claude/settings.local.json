@@ -9,7 +9,12 @@
       "Bash(node check-costs.js:*)",
       "Bash(node test-sale.js:*)",
       "Bash(node check-sold-out.js:*)",
-      "Bash(node fix-sold-out-costs.js:*)"
+      "Bash(node fix-sold-out-costs.js:*)",
+      "Bash(node system-audit.js:*)",
+      "Bash(node show-stock-issues.js:*)",
+      "Bash(node check-sale-size.js:*)",
+      "Bash(node fix-nosizes-products.js:*)",
+      "Bash(node fix-cost-value.js:*)"
     ],
     "deny": [],
     "ask": []

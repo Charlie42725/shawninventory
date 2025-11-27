@@ -224,9 +224,11 @@ export async function processSale(saleData: {
     const newSizeStock = { ...sizeStock }
     let newTotalStock = product.total_stock - saleData.quantity
 
-    if (saleData.size) {
+    // 如果是有尺寸的產品，扣減對應尺寸的庫存
+    if (saleData.size && Object.keys(sizeStock).length > 0) {
       newSizeStock[saleData.size] = (newSizeStock[saleData.size] || 0) - saleData.quantity
     }
+    // 無尺寸產品不需要處理 size_stock（保持為空對象）
 
     // 計算新的成本 (扣減實際銷售的成本)
     // 使用加權平均成本，銷售成本 = 平均單位成本 × 銷售數量
