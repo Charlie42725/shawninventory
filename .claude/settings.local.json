@@ -3,7 +3,13 @@
     "allow": [
       "Bash(curl:*)",
       "Bash(npm run dev:*)",
-      "Bash(python3:*)"
+      "Bash(python3:*)",
+      "Bash(cat:*)",
+      "Bash(node fix-costs.js:*)",
+      "Bash(node check-costs.js:*)",
+      "Bash(node test-sale.js:*)",
+      "Bash(node check-sold-out.js:*)",
+      "Bash(node fix-sold-out-costs.js:*)"
     ],
     "deny": [],
     "ask": []

@@ -233,8 +233,8 @@ export async function processSale(saleData: {
     const costOfGoodsSold = product.avg_unit_cost * saleData.quantity
     const newTotalCostValue = Math.max(0, product.total_cost_value - costOfGoodsSold)
 
-    // 平均成本保持不變（除非庫存清空）
-    const newAvgUnitCost = newTotalStock > 0 ? product.avg_unit_cost : 0
+    // 平均成本保持不變（即使庫存清空也要保留，用於財務報表計算）
+    const newAvgUnitCost = product.avg_unit_cost
 
     const { error: updateError } = await supabaseAdmin
       .from('products')
