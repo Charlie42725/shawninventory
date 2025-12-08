@@ -2,6 +2,7 @@ import { NextResponse } from 'next/server'
 import { supabaseAdmin } from '@/lib/supabase'
 import { processStockIn, calculateTotalQuantity } from '@/lib/inventory-utils'
 import { SizeQuantities } from '@/lib/database.types'
+import { updateProductSalesCOGS, logCOGSUpdate } from '@/lib/update-sales-cogs'
 
 // GET - 查詢進貨記錄
 export async function GET(request: Request) {
@@ -239,6 +240,22 @@ export async function DELETE(request: Request) {
       throw updateError
     }
 
+    // 5.5 自動更新該產品所有銷售記錄的 COGS（方案 B）
+    const oldAvgCost = product.avg_unit_cost
+    if (Math.abs(newAvgUnitCost - oldAvgCost) > 0.01) {
+      const { updated } = await updateProductSalesCOGS(product.id, newAvgUnitCost)
+      if (updated > 0) {
+        await logCOGSUpdate(
+          product.id,
+          'stock_in_deletion',
+          parseInt(id),
+          oldAvgCost,
+          newAvgUnitCost,
+          updated
+        )
+      }
+    }
+
     // 6. 記錄庫存異動
     await supabaseAdmin
       .from('inventory_movements')
@@ -427,6 +444,22 @@ export async function PUT(request: Request) {
         })
         .eq('id', product.id)
 
+      // 自動更新該產品所有銷售記錄的 COGS（方案 B）
+      const oldAvgCost = product.avg_unit_cost
+      if (Math.abs(newAvgUnitCost - oldAvgCost) > 0.01) {
+        const { updated } = await updateProductSalesCOGS(product.id, newAvgUnitCost)
+        if (updated > 0) {
+          await logCOGSUpdate(
+            product.id,
+            'stock_in_edit',
+            parseInt(id),
+            oldAvgCost,
+            newAvgUnitCost,
+            updated
+          )
+        }
+      }
+
       // 記錄庫存異動
       if (quantityDifference !== 0) {
         await supabaseAdmin
@@ -466,6 +499,22 @@ export async function PUT(request: Request) {
           updated_at: new Date().toISOString(),
         })
         .eq('id', product.id)
+
+      // 自動更新該產品所有銷售記錄的 COGS（方案 B）
+      const oldAvgCost = product.avg_unit_cost
+      if (Math.abs(newAvgUnitCost - oldAvgCost) > 0.01) {
+        const { updated } = await updateProductSalesCOGS(product.id, newAvgUnitCost)
+        if (updated > 0) {
+          await logCOGSUpdate(
+            product.id,
+            'stock_in_edit',
+            parseInt(id),
+            oldAvgCost,
+            newAvgUnitCost,
+            updated
+          )
+        }
+      }
     }
 
     const { data, error } = await supabaseAdmin
