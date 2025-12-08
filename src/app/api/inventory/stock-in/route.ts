@@ -181,7 +181,17 @@ export async function DELETE(request: Request) {
       )
     }
 
-    // 3. 計算回退後的庫存
+    // 3. 先檢查總庫存是否足夠（這是最重要的檢查）
+    const newTotalStock = product.total_stock - stockInRecord.total_quantity
+
+    if (newTotalStock < 0) {
+      return NextResponse.json(
+        { error: `無法刪除: 總庫存不足 (當前總庫存: ${product.total_stock}, 需要回退: ${stockInRecord.total_quantity})` },
+        { status: 400 }
+      )
+    }
+
+    // 4. 處理尺寸庫存（如果總庫存足夠，就允許刪除，即使個別尺寸對不上）
     const sizeQuantities = stockInRecord.size_quantities as SizeQuantities || {}
     const currentSizeStock = product.size_stock as Record<string, number> || {}
     const newSizeStock = { ...currentSizeStock }
@@ -191,14 +201,9 @@ export async function DELETE(request: Request) {
       const currentQty = currentSizeStock[size] || 0
       const decreaseQty = qty as number
 
-      if (currentQty < decreaseQty) {
-        return NextResponse.json(
-          { error: `無法刪除: ${size} 的庫存不足 (當前: ${currentQty}, 需要: ${decreaseQty})` },
-          { status: 400 }
-        )
-      }
-
-      newSizeStock[size] = currentQty - decreaseQty
+      // 扣減庫存，允許變成負數（因為總庫存已經檢查過了）
+      // 這種情況可能發生在售完後尺寸庫存已經清空的產品
+      newSizeStock[size] = Math.max(0, currentQty - decreaseQty)
 
       // 如果庫存為 0,移除該尺寸
       if (newSizeStock[size] === 0) {
@@ -206,32 +211,34 @@ export async function DELETE(request: Request) {
       }
     }
 
-    // 4. 計算新的總庫存和成本
-    const newTotalStock = product.total_stock - stockInRecord.total_quantity
+    // 5. 完全重算：查詢刪除後剩餘的所有進貨記錄
+    let stockInQuery = supabaseAdmin
+      .from('stock_in')
+      .select('total_cost, total_quantity')
+      .eq('category_id', product.category_id)
+      .eq('product_name', product.product_name)
+      .neq('id', parseInt(id))  // 排除即將刪除的這筆
 
-    if (newTotalStock < 0) {
-      return NextResponse.json(
-        { error: `無法刪除: 總庫存不足` },
-        { status: 400 }
-      )
+    if (product.color) {
+      stockInQuery = stockInQuery.eq('color', product.color)
+    } else {
+      stockInQuery = stockInQuery.is('color', null)
     }
 
-    // 計算新的成本價值(扣除這次進貨的成本)
-    const newTotalCostValue = product.total_cost_value - stockInRecord.total_cost
+    const { data: remainingStockIns } = await stockInQuery
+    const totalStockInCost = remainingStockIns?.reduce((sum, s) => sum + (s.total_cost || 0), 0) || 0
+    const totalStockInQty = remainingStockIns?.reduce((sum, s) => sum + (s.total_quantity || 0), 0) || 0
 
-    // 計算新的平均成本
-    const newAvgUnitCost = newTotalStock > 0
-      ? newTotalCostValue / newTotalStock
-      : 0
+    // 計算新的平均成本（基於剩餘進貨）
+    const newAvgUnitCost = totalStockInQty > 0 ? totalStockInCost / totalStockInQty : 0
 
-    // 5. 更新產品庫存
+    // 6. 先更新產品的庫存和平均成本
     const { error: updateError } = await supabaseAdmin
       .from('products')
       .update({
         size_stock: newSizeStock,
         total_stock: newTotalStock,
         avg_unit_cost: newAvgUnitCost,
-        total_cost_value: newTotalCostValue,
         updated_at: new Date().toISOString(),
       })
       .eq('id', product.id)
@@ -240,40 +247,22 @@ export async function DELETE(request: Request) {
       throw updateError
     }
 
-    // 5.5 自動更新該產品所有銷售記錄的 COGS（方案 B）
+    // 7. 調用 updateProductSalesCOGS 來重新計算 COGS 和 total_cost_value
     const oldAvgCost = product.avg_unit_cost
-    if (Math.abs(newAvgUnitCost - oldAvgCost) > 0.01) {
-      // 查詢該產品所有剩餘的進貨記錄，計算總進貨成本
-      let stockInQuery = supabaseAdmin
-        .from('stock_in')
-        .select('total_cost')
-        .eq('category_id', product.category_id)
-        .eq('product_name', product.product_name)
-        .neq('id', parseInt(id))  // 排除即將刪除的這筆
+    const { updated } = await updateProductSalesCOGS(product.id, newAvgUnitCost, totalStockInCost)
 
-      if (product.color) {
-        stockInQuery = stockInQuery.eq('color', product.color)
-      } else {
-        stockInQuery = stockInQuery.is('color', null)
-      }
-
-      const { data: remainingStockIns } = await stockInQuery
-      const totalStockInCost = remainingStockIns?.reduce((sum, s) => sum + (s.total_cost || 0), 0) || 0
-
-      const { updated } = await updateProductSalesCOGS(product.id, newAvgUnitCost, totalStockInCost)
-      if (updated > 0) {
-        await logCOGSUpdate(
-          product.id,
-          'stock_in_deletion',
-          parseInt(id),
-          oldAvgCost,
-          newAvgUnitCost,
-          updated
-        )
-      }
+    if (updated > 0) {
+      await logCOGSUpdate(
+        product.id,
+        'stock_in_deletion',
+        parseInt(id),
+        oldAvgCost,
+        newAvgUnitCost,
+        updated
+      )
     }
 
-    // 6. 記錄庫存異動
+    // 8. 記錄庫存異動
     await supabaseAdmin
       .from('inventory_movements')
       .insert({
@@ -288,7 +277,7 @@ export async function DELETE(request: Request) {
         note: `刪除進貨記錄 #${id}: ${stockInRecord.product_name}`,
       })
 
-    // 7. 刪除進貨記錄
+    // 9. 刪除進貨記錄
     const { error: deleteError } = await supabaseAdmin
       .from('stock_in')
       .delete()
