@@ -74,7 +74,7 @@ export async function GET(request: Request) {
     const customStartDate = searchParams.get('startDate');
     const customEndDate = searchParams.get('endDate');
 
-    let startDate: string;
+    let startDate: string | undefined;
     let endDate: string | undefined;
 
     // 如果有自定義日期範圍，優先使用
@@ -82,14 +82,21 @@ export async function GET(request: Request) {
       const customRange = getCustomDateRange(customStartDate, customEndDate);
       startDate = customRange.start;
       endDate = customRange.end;
-    } else {
-      // 使用預設日期範圍
+    } else if (dateRange !== 'all') {
+      // 使用預設日期範圍（如果不是'all'）
       startDate = getDateRangeFilter(dateRange || 'month');
     }
+    // 如果 dateRange === 'all'，startDate 和 endDate 都保持 undefined，即查詢所有數據
 
-    // 構建查詢，如果有 endDate 則添加上限過濾
-    let salesQuery = supabaseAdmin.from("sales").select("*").gte('date', startDate);
-    let expensesQuery = supabaseAdmin.from("expenses").select("*").gte('date', startDate);
+    // 構建查詢
+    let salesQuery = supabaseAdmin.from("sales").select("*");
+    let expensesQuery = supabaseAdmin.from("expenses").select("*");
+
+    // 只在有日期範圍時才添加過濾
+    if (startDate) {
+      salesQuery = salesQuery.gte('date', startDate);
+      expensesQuery = expensesQuery.gte('date', startDate);
+    }
 
     if (endDate) {
       salesQuery = salesQuery.lte('date', endDate);

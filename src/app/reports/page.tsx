@@ -32,7 +32,7 @@ interface ReportData {
 export default function ReportsPage() {
   const [reportData, setReportData] = useState<ReportData | null>(null)
   const [loading, setLoading] = useState(true)
-  const [dateRange, setDateRange] = useState('month')
+  const [dateRange, setDateRange] = useState('all')  // 改为默认显示所有时间
   const [startDate, setStartDate] = useState('')
   const [endDate, setEndDate] = useState('')
   const [useCustomRange, setUseCustomRange] = useState(false)
