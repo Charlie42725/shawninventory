@@ -144,9 +144,23 @@ export async function DELETE(request: Request) {
 
         // 重新計算成本 (恢復比例)
         const previousTotalCostValue = product.total_cost_value
-        const restoredCost = (sale.unit_price * sale.quantity)  // 使用銷售單價估算
+
+        // 使用銷售記錄中的 COGS 來恢復成本（而非銷售單價）
+        // 如果 COGS 不存在（歷史數據），則使用當前平均成本估算
+        const restoredCost = sale.cost_of_goods_sold && sale.cost_of_goods_sold > 0
+          ? sale.cost_of_goods_sold
+          : product.avg_unit_cost * sale.quantity
+
         const newTotalCostValue = previousTotalCostValue + restoredCost
         const newAvgUnitCost = newTotalStock > 0 ? newTotalCostValue / newTotalStock : product.avg_unit_cost
+
+        // 如果使用了估算值，記錄警告
+        if (!sale.cost_of_goods_sold || sale.cost_of_goods_sold === 0) {
+          console.warn(
+            `[成本恢復] 銷售記錄 #${sale.id} 的 COGS 為 0，` +
+            `使用平均成本 $${product.avg_unit_cost} × ${sale.quantity} = $${product.avg_unit_cost * sale.quantity} 估算`
+          )
+        }
 
         await supabaseAdmin
           .from('products')

@@ -249,6 +249,17 @@ export async function processSale(saleData: {
     // 計算新的成本 (扣減實際銷售的成本)
     // 使用加權平均成本，銷售成本 = 平均單位成本 × 銷售數量
     const costOfGoodsSold = product.avg_unit_cost * saleData.quantity
+
+    // 防禦性檢查：禁止銷售成本為 0 的產品
+    if (costOfGoodsSold === 0) {
+      throw new Error(
+        `無法銷售：產品「${saleData.product_name}」的平均成本為 0。\n` +
+        `這通常表示產品尚未進貨或進貨記錄未正確處理。\n` +
+        `請先新增進貨記錄，確保產品有正確的成本後再進行銷售。\n` +
+        `當前產品狀態：庫存 ${product.total_stock}，平均成本 $${product.avg_unit_cost}`
+      )
+    }
+
     const newTotalCostValue = Math.max(0, product.total_cost_value - costOfGoodsSold)
 
     // 平均成本保持不變（即使庫存清空也要保留，用於財務報表計算）
