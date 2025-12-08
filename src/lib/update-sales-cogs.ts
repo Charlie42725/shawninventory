@@ -26,12 +26,21 @@ export async function updateProductSalesCOGS(
     }
 
     if (!sales || sales.length === 0) {
-      // 沒有銷售記錄，如果提供了總進貨成本，則更新產品的 total_cost_value
-      if (totalStockInCost !== undefined) {
+      // 沒有銷售記錄，更新產品的 total_cost_value（基於當前庫存）
+      const { data: product, error: productError } = await supabaseAdmin
+        .from('products')
+        .select('total_stock')
+        .eq('id', productId)
+        .single()
+
+      if (!productError && product) {
+        // total_cost_value = 當前庫存數量 × 平均成本
+        const newTotalCostValue = product.total_stock * newAvgUnitCost
+
         await supabaseAdmin
           .from('products')
           .update({
-            total_cost_value: totalStockInCost,
+            total_cost_value: Math.max(0, newTotalCostValue),
             updated_at: new Date().toISOString(),
           })
           .eq('id', productId)
@@ -57,9 +66,17 @@ export async function updateProductSalesCOGS(
     // 3. 計算所有銷售的總 COGS
     const totalCOGS = updates.reduce((sum, u) => sum + u.cost_of_goods_sold, 0)
 
-    // 4. 如果提供了總進貨成本，則同步更新產品的 total_cost_value
-    if (totalStockInCost !== undefined) {
-      const newTotalCostValue = totalStockInCost - totalCOGS
+    // 4. 更新產品的 total_cost_value（基於當前庫存）
+    // 查詢產品當前庫存數量
+    const { data: product, error: productError } = await supabaseAdmin
+      .from('products')
+      .select('total_stock')
+      .eq('id', productId)
+      .single()
+
+    if (!productError && product) {
+      // total_cost_value = 當前庫存數量 × 平均成本
+      const newTotalCostValue = product.total_stock * newAvgUnitCost
 
       await supabaseAdmin
         .from('products')
@@ -72,9 +89,9 @@ export async function updateProductSalesCOGS(
       console.log(
         `✅ 已更新產品 #${productId}:\n` +
         `   - ${updates.length} 筆銷售記錄 COGS (新平均成本: $${newAvgUnitCost.toFixed(2)})\n` +
-        `   - 總進貨成本: $${totalStockInCost.toFixed(2)}\n` +
+        `   - 當前庫存: ${product.total_stock}\n` +
         `   - 總銷售 COGS: $${totalCOGS.toFixed(2)}\n` +
-        `   - 剩餘庫存成本: $${newTotalCostValue.toFixed(2)}`
+        `   - 庫存成本價值: $${newTotalCostValue.toFixed(2)}`
       )
     } else {
       console.log(

@@ -260,10 +260,11 @@ export async function processSale(saleData: {
       )
     }
 
-    const newTotalCostValue = Math.max(0, product.total_cost_value - costOfGoodsSold)
-
     // 平均成本保持不變（即使庫存清空也要保留，用於財務報表計算）
     const newAvgUnitCost = product.avg_unit_cost
+
+    // total_cost_value = 新庫存數量 × 平均成本
+    const newTotalCostValue = newTotalStock * newAvgUnitCost
 
     // 將計算出的 COGS 加入銷售數據（如果未提供）
     if (saleData.cost_of_goods_sold === undefined || saleData.cost_of_goods_sold === null) {
