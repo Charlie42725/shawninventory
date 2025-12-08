@@ -811,13 +811,15 @@ function EditSaleModal({
     channel: sale.channel || '',
     shipping_method: sale.shipping_method || '',
     unit_price: sale.unit_price.toString(),
+    quantity: sale.quantity.toString(),
     note: sale.note || ''
   })
   const [loading, setLoading] = useState(false)
 
   const calculateTotal = () => {
     const price = parseFloat(formData.unit_price) || 0
-    return (price * sale.quantity).toFixed(2)
+    const qty = parseInt(formData.quantity) || 0
+    return (price * qty).toFixed(2)
   }
 
   const handleSubmit = async (e: React.FormEvent) => {
@@ -830,6 +832,7 @@ function EditSaleModal({
         headers: { 'Content-Type': 'application/json' },
         body: JSON.stringify({
           ...formData,
+          quantity: parseInt(formData.quantity),
           channel: formData.channel || null,
           shipping_method: formData.shipping_method || null,
         }),
@@ -872,15 +875,9 @@ function EditSaleModal({
               <div>
                 <span className="text-gray-500 dark:text-gray-400">尺寸:</span> <span className="text-gray-900 dark:text-gray-100">{sale.size || '-'}</span>
               </div>
-              <div>
-                <span className="text-gray-500 dark:text-gray-400">數量:</span> <span className="text-gray-900 dark:text-gray-100">{formatInteger(sale.quantity)}</span>
-              </div>
-              <div>
-                <span className="text-gray-500 dark:text-gray-400">原單價:</span> <span className="text-gray-900 dark:text-gray-100">{formatCurrency(sale.unit_price)}</span>
-              </div>
             </div>
             <p className="text-xs text-gray-500 dark:text-gray-400 mt-2">
-              註:產品、尺寸、數量等核心資訊無法修改,如需變更請刪除後重新建立
+              註: 產品、尺寸等核心資訊無法修改，如需變更請刪除後重新建立
             </p>
           </div>
 
@@ -939,17 +936,33 @@ function EditSaleModal({
             </div>
           </div>
 
-          <div>
-            <label className="block text-sm font-medium text-gray-900 dark:text-gray-100 mb-1">單價 ($) *</label>
-            <input
-              type="number"
-              step="0.01"
-              min="0"
-              value={formData.unit_price}
-              onChange={e => setFormData({...formData, unit_price: e.target.value})}
-              className="w-full px-3 py-2 border border-gray-300 dark:border-gray-600 rounded-md focus:outline-none focus:ring-2 focus:ring-indigo-500 text-gray-900 dark:text-gray-100 bg-white dark:bg-gray-700 transition-colors"
-              required
-            />
+          <div className="grid grid-cols-1 sm:grid-cols-2 gap-3 sm:gap-4">
+            <div>
+              <label className="block text-sm font-medium text-gray-900 dark:text-gray-100 mb-1">單價 ($) *</label>
+              <input
+                type="number"
+                step="0.01"
+                min="0"
+                value={formData.unit_price}
+                onChange={e => setFormData({...formData, unit_price: e.target.value})}
+                className="w-full px-3 py-2 border border-gray-300 dark:border-gray-600 rounded-md focus:outline-none focus:ring-2 focus:ring-indigo-500 text-gray-900 dark:text-gray-100 bg-white dark:bg-gray-700 transition-colors"
+                required
+              />
+            </div>
+            <div>
+              <label className="block text-sm font-medium text-gray-900 dark:text-gray-100 mb-1">數量 *</label>
+              <input
+                type="number"
+                min="1"
+                value={formData.quantity}
+                onChange={e => setFormData({...formData, quantity: e.target.value})}
+                className="w-full px-3 py-2 border border-gray-300 dark:border-gray-600 rounded-md focus:outline-none focus:ring-2 focus:ring-indigo-500 text-gray-900 dark:text-gray-100 bg-white dark:bg-gray-700 transition-colors"
+                required
+              />
+              <p className="text-xs text-gray-500 dark:text-gray-400 mt-1">
+                原數量: {sale.quantity}
+              </p>
+            </div>
           </div>
 
           <div>
