@@ -4,6 +4,7 @@ import { useEffect, useState } from 'react'
 import ProtectedLayout from '@/components/ProtectedLayout'
 import ConfirmDialog from '@/components/ConfirmDialog'
 import { ORDER_TYPES } from '@/lib/database.types'
+import { formatCurrency, formatInteger, formatNumber } from '@/lib/format-utils'
 
 interface Category {
   id: number
@@ -304,7 +305,7 @@ export default function InventoryPage() {
                 <div className="ml-3 sm:ml-5 w-0 flex-1">
                   <dl>
                     <dt className="text-xs sm:text-sm font-medium text-gray-500 dark:text-gray-400 truncate">存貨總價值</dt>
-                    <dd className="text-base sm:text-lg font-medium text-indigo-600 dark:text-indigo-500">${inventoryStats.totalValue.toFixed(2)}</dd>
+                    <dd className="text-base sm:text-lg font-medium text-indigo-600 dark:text-indigo-500">{formatCurrency(inventoryStats.totalValue)}</dd>
                     <dd className="text-xs text-gray-400 dark:text-gray-500 mt-0.5">加權平均成本</dd>
                   </dl>
                 </div>
@@ -325,7 +326,7 @@ export default function InventoryPage() {
                 <div className="ml-3 sm:ml-5 w-0 flex-1">
                   <dl>
                     <dt className="text-xs sm:text-sm font-medium text-gray-500 dark:text-gray-400 truncate">現貨價值</dt>
-                    <dd className="text-base sm:text-lg font-medium text-green-600 dark:text-green-500">${inventoryStats.fifoValue.toFixed(2)}</dd>
+                    <dd className="text-base sm:text-lg font-medium text-green-600 dark:text-green-500">{formatCurrency(inventoryStats.fifoValue)}</dd>
                     <dd className="text-xs text-gray-400 dark:text-gray-500 mt-0.5">實際進貨成本</dd>
                   </dl>
                 </div>
@@ -758,10 +759,10 @@ function InventoryTable({
                   </span>
                 </td>
                 <td className="px-3 sm:px-6 py-3 sm:py-4 whitespace-nowrap text-center text-xs sm:text-sm text-gray-900 dark:text-gray-100 hidden md:table-cell">
-                  ${product.avg_unit_cost.toFixed(2)}
+                  {formatCurrency(product.avg_unit_cost)}
                 </td>
                 <td className="px-3 sm:px-6 py-3 sm:py-4 whitespace-nowrap text-center text-xs sm:text-sm font-medium text-gray-900 dark:text-gray-100 hidden sm:table-cell">
-                  ${product.total_cost_value.toFixed(2)}
+                  {formatCurrency(product.total_cost_value)}
                 </td>
                 <td className="px-3 sm:px-6 py-3 sm:py-4 whitespace-nowrap text-center text-xs sm:text-sm font-medium">
                   <button
@@ -933,13 +934,13 @@ function StockInTable({
                   {record.color || record.ip_category || '-'}
                 </td>
                 <td className="px-6 py-4 whitespace-nowrap text-center text-sm font-medium text-gray-900 dark:text-gray-100">
-                  {record.total_quantity}
+                  {formatInteger(record.total_quantity)}
                 </td>
                 <td className="px-6 py-4 whitespace-nowrap text-center text-sm text-gray-600 dark:text-gray-400">
-                  ${record.unit_cost.toFixed(2)}
+                  {formatCurrency(record.unit_cost)}
                 </td>
                 <td className="px-6 py-4 whitespace-nowrap text-center text-sm font-bold text-gray-900 dark:text-gray-100">
-                  ${record.total_cost.toFixed(2)}
+                  {formatCurrency(record.total_cost)}
                 </td>
                 <td className="px-6 py-4 text-sm text-gray-600 dark:text-gray-400 max-w-xs">
                   <div className="truncate" title={record.note || ''}>
@@ -1463,7 +1464,7 @@ function StockInModal({
 
           <div className="bg-gray-100 dark:bg-gray-900 p-3 sm:p-4 rounded transition-colors">
             <p className="text-base sm:text-lg font-bold text-gray-900 dark:text-gray-100">
-              總成本: ${calculateTotal()}
+              總成本: {formatCurrency(parseFloat(calculateTotal()))}
             </p>
           </div>
 
@@ -1751,7 +1752,7 @@ function EditStockInModal({
 
           <div className="bg-gray-100 dark:bg-gray-900 p-3 sm:p-4 rounded transition-colors">
             <p className="text-base sm:text-lg font-bold text-gray-900 dark:text-gray-100">
-              總成本: ${calculateTotal()}
+              總成本: {formatCurrency(parseFloat(calculateTotal()))}
             </p>
           </div>
 

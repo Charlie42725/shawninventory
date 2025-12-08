@@ -3,6 +3,7 @@
 import { useEffect, useState, useCallback } from 'react'
 import Link from 'next/link'
 import ProtectedLayout from '@/components/ProtectedLayout'
+import { formatCurrency, formatInteger } from '@/lib/format-utils'
 
 interface ReportData {
   totalSales: number
@@ -251,7 +252,7 @@ export default function ReportsPage() {
           <div className="bg-white dark:bg-gray-800 p-4 sm:p-6 rounded-lg shadow-sm transition-colors">
             <h3 className="text-xs sm:text-sm font-medium text-gray-500 dark:text-gray-400 mb-2">總銷售額</h3>
             <p className="text-2xl sm:text-3xl font-bold text-green-600 dark:text-green-500">
-              ${(reportData.totalSales || 0).toLocaleString()}
+              {formatCurrency(reportData.totalSales || 0)}
             </p>
             <p className="text-xs sm:text-sm text-gray-600 dark:text-gray-400 mt-1">營業收入</p>
           </div>
@@ -259,7 +260,7 @@ export default function ReportsPage() {
           <div className="bg-white dark:bg-gray-800 p-6 rounded-lg shadow-sm transition-colors">
             <h3 className="text-sm font-medium text-gray-500 dark:text-gray-400 mb-2">銷售成本</h3>
             <p className="text-3xl font-bold text-orange-600 dark:text-orange-500">
-              ${(reportData.totalStockCost || 0).toLocaleString()}
+              {formatCurrency(reportData.totalStockCost || 0)}
             </p>
             <p className="text-sm text-gray-600 dark:text-gray-400 mt-1">已售商品成本</p>
           </div>
@@ -267,7 +268,7 @@ export default function ReportsPage() {
           <div className="bg-white dark:bg-gray-800 p-6 rounded-lg shadow-sm transition-colors">
             <h3 className="text-sm font-medium text-gray-500 dark:text-gray-400 mb-2">營運支出</h3>
             <p className="text-3xl font-bold text-red-600 dark:text-red-500">
-              ${(reportData.totalOperatingExpenses || 0).toLocaleString()}
+              {formatCurrency(reportData.totalOperatingExpenses || 0)}
             </p>
             <p className="text-sm text-gray-600 dark:text-gray-400 mt-1">日常營運費用</p>
           </div>
@@ -275,7 +276,7 @@ export default function ReportsPage() {
           <div className="bg-white dark:bg-gray-800 p-6 rounded-lg shadow-sm transition-colors">
             <h3 className="text-sm font-medium text-gray-500 dark:text-gray-400 mb-2">毛利</h3>
             <p className="text-3xl font-bold text-blue-600 dark:text-blue-500">
-              ${(reportData.grossProfit || 0).toLocaleString()}
+              {formatCurrency(reportData.grossProfit || 0)}
             </p>
             <p className="text-sm text-gray-600 dark:text-gray-400 mt-1">
               毛利率 {(reportData.totalSales || 0) > 0 ? (((reportData.grossProfit || 0) / (reportData.totalSales || 1)) * 100).toFixed(1) : '0.0'}%
@@ -285,7 +286,7 @@ export default function ReportsPage() {
           <div className="bg-white dark:bg-gray-800 p-6 rounded-lg shadow-sm transition-colors">
             <h3 className="text-sm font-medium text-gray-500 dark:text-gray-400 mb-2">淨利</h3>
             <p className="text-3xl font-bold text-purple-600 dark:text-purple-500">
-              ${(reportData.netProfit || 0).toLocaleString()}
+              {formatCurrency(reportData.netProfit || 0)}
             </p>
             <p className="text-sm text-gray-600 dark:text-gray-400 mt-1">
               淨利率 {(reportData.totalSales || 0) > 0 ? (((reportData.netProfit || 0) / (reportData.totalSales || 1)) * 100).toFixed(1) : '0.0'}%
@@ -307,7 +308,7 @@ export default function ReportsPage() {
               <div className="flex justify-between items-center">
                 <span className="text-lg font-semibold text-gray-900 dark:text-gray-100">營業收入</span>
                 <span className="text-lg font-bold text-green-600 dark:text-green-500">
-                  ${(reportData.totalSales || 0).toLocaleString()}
+                  {formatCurrency(reportData.totalSales || 0)}
                 </span>
               </div>
             </div>
@@ -317,13 +318,13 @@ export default function ReportsPage() {
               <div className="flex justify-between items-center mb-2">
                 <span className="text-base font-medium text-gray-700 dark:text-gray-300">減：銷售成本</span>
                 <span className="text-base font-semibold text-orange-600 dark:text-orange-500">
-                  (${(reportData.totalStockCost || 0).toLocaleString()})
+                  ({formatCurrency(reportData.totalStockCost || 0)})
                 </span>
               </div>
               <div className="flex justify-between items-center bg-blue-50 dark:bg-blue-900/20 p-3 rounded transition-colors">
                 <span className="text-lg font-semibold text-gray-900 dark:text-gray-100">毛利</span>
                 <span className="text-lg font-bold text-blue-600 dark:text-blue-500">
-                  ${(reportData.grossProfit || 0).toLocaleString()}
+                  {formatCurrency(reportData.grossProfit || 0)}
                 </span>
               </div>
             </div>
@@ -333,7 +334,7 @@ export default function ReportsPage() {
               <div className="flex justify-between items-center mb-2">
                 <span className="text-base font-medium text-gray-700 dark:text-gray-300">減：營運費用</span>
                 <span className="text-base font-semibold text-red-600 dark:text-red-500">
-                  (${(reportData.totalOperatingExpenses || 0).toLocaleString()})
+                  ({formatCurrency(reportData.totalOperatingExpenses || 0)})
                 </span>
               </div>
             </div>
@@ -343,7 +344,7 @@ export default function ReportsPage() {
               <div className="flex justify-between items-center">
                 <span className="text-xl font-bold text-gray-900 dark:text-gray-100">淨利</span>
                 <span className="text-xl font-bold text-purple-600 dark:text-purple-500">
-                  ${(reportData.netProfit || 0).toLocaleString()}
+                  {formatCurrency(reportData.netProfit || 0)}
                 </span>
               </div>
               <div className="text-sm text-gray-600 dark:text-gray-400 mt-1">
@@ -366,7 +367,7 @@ export default function ReportsPage() {
             <div className="text-center p-4 bg-orange-50 dark:bg-orange-900/20 rounded-lg transition-colors">
               <p className="text-sm font-medium text-gray-700 dark:text-gray-300 mb-1">銷售成本 (COGS)</p>
               <p className="text-2xl font-bold text-orange-600 dark:text-orange-500">
-                ${(reportData.totalStockCost || 0).toLocaleString()}
+                {formatCurrency(reportData.totalStockCost || 0)}
               </p>
               <p className="text-xs text-gray-600 dark:text-gray-400 mt-1">
                 {(reportData.totalSales || 0) > 0 ? (((reportData.totalStockCost || 0) / (reportData.totalSales || 1)) * 100).toFixed(1) : '0'}% 佔銷售額
@@ -376,7 +377,7 @@ export default function ReportsPage() {
             <div className="text-center p-4 bg-red-50 dark:bg-red-900/20 rounded-lg transition-colors">
               <p className="text-sm font-medium text-gray-700 dark:text-gray-300 mb-1">營運支出 (OPEX)</p>
               <p className="text-2xl font-bold text-red-600 dark:text-red-500">
-                ${(reportData.totalOperatingExpenses || 0).toLocaleString()}
+                {formatCurrency(reportData.totalOperatingExpenses || 0)}
               </p>
               <p className="text-xs text-gray-600 dark:text-gray-400 mt-1">
                 {(reportData.totalSales || 0) > 0 ? (((reportData.totalOperatingExpenses || 0) / (reportData.totalSales || 1)) * 100).toFixed(1) : '0'}% 佔銷售額
@@ -397,7 +398,7 @@ export default function ReportsPage() {
           <div className="bg-white dark:bg-gray-800 p-6 rounded-lg shadow-sm transition-colors">
             <h3 className="text-sm font-medium text-gray-500 dark:text-gray-400 mb-2">平均訂單價值</h3>
             <p className="text-2xl font-bold text-indigo-600 dark:text-indigo-500">
-              ${reportData.productsSold > 0 ? Math.round(reportData.totalSales / reportData.productsSold).toLocaleString() : '0'}
+              {reportData.productsSold > 0 ? formatCurrency(reportData.totalSales / reportData.productsSold) : formatCurrency(0)}
             </p>
             <p className="text-sm text-gray-600 dark:text-gray-400 mt-1">每筆訂單平均金額</p>
           </div>
@@ -455,7 +456,7 @@ export default function ReportsPage() {
                     <td className="py-3 px-4 font-semibold text-gray-900 dark:text-gray-100">{product.model || 'Unknown'}</td>
                     <td className="py-3 px-4 text-right font-medium text-gray-900 dark:text-gray-100 hidden md:table-cell">{product.quantity || 0}</td>
                     <td className="py-3 px-4 text-right font-semibold text-green-700 dark:text-green-500">
-                      ${(product.revenue || 0).toLocaleString()}
+                      {formatCurrency(product.revenue || 0)}
                     </td>
                     <td className="py-3 px-4 text-right font-medium text-blue-700 dark:text-blue-500 hidden sm:table-cell">
                       {reportData.totalSales > 0 && (product.revenue || 0) > 0 ?
@@ -499,20 +500,20 @@ export default function ReportsPage() {
                       </div>
                     </td>
                     <td className="py-3 px-4 text-right text-green-700 dark:text-green-500 font-semibold">
-                      ${month.sales.toLocaleString()}
+                      {formatCurrency(month.sales)}
                     </td>
                     <td className="py-3 px-4 text-right text-red-700 dark:text-red-500 font-medium hidden lg:table-cell">
-                      -${month.stockCost.toLocaleString()}
+                      -{formatCurrency(month.stockCost)}
                     </td>
                     <td className="py-3 px-4 text-right text-blue-700 dark:text-blue-500 font-semibold hidden md:table-cell">
-                      ${month.grossProfit.toLocaleString()}
+                      {formatCurrency(month.grossProfit)}
                     </td>
                     <td className="py-3 px-4 text-right text-orange-700 dark:text-orange-500 font-medium hidden xl:table-cell">
-                      -${month.operatingExpenses.toLocaleString()}
+                      -{formatCurrency(month.operatingExpenses)}
                     </td>
                     <td className="py-3 px-4 text-right font-bold">
                       <span className={month.netProfit >= 0 ? 'text-green-700 dark:text-green-500' : 'text-red-700 dark:text-red-500'}>
-                        ${month.netProfit.toLocaleString()}
+                        {formatCurrency(month.netProfit)}
                       </span>
                     </td>
                     <td className="py-3 px-4 text-center hidden sm:table-cell">

@@ -4,6 +4,7 @@ import { useEffect, useState } from 'react'
 import ProtectedLayout from '@/components/ProtectedLayout'
 import ConfirmDialog from '@/components/ConfirmDialog'
 import { CUSTOMER_TYPES, CHANNELS, SHIPPING_METHODS } from '@/lib/database.types'
+import { formatCurrency, formatInteger, formatNumber } from '@/lib/format-utils'
 
 interface Product {
   id: number
@@ -256,7 +257,7 @@ export default function SalesPage() {
                 <div className="ml-3 sm:ml-5 w-0 flex-1">
                   <dl>
                     <dt className="text-xs sm:text-sm font-medium text-gray-500 dark:text-gray-400 truncate">總銷售筆數</dt>
-                    <dd className="text-base sm:text-lg font-medium text-gray-900 dark:text-gray-100">{stats.total}</dd>
+                    <dd className="text-base sm:text-lg font-medium text-gray-900 dark:text-gray-100">{formatInteger(stats.total)}</dd>
                   </dl>
                 </div>
               </div>
@@ -276,7 +277,7 @@ export default function SalesPage() {
                 <div className="ml-3 sm:ml-5 w-0 flex-1">
                   <dl>
                     <dt className="text-xs sm:text-sm font-medium text-gray-500 dark:text-gray-400 truncate">總銷售金額</dt>
-                    <dd className="text-base sm:text-lg font-medium text-green-600 dark:text-green-500">${stats.totalAmount.toFixed(2)}</dd>
+                    <dd className="text-base sm:text-lg font-medium text-green-600 dark:text-green-500">{formatCurrency(stats.totalAmount)}</dd>
                   </dl>
                 </div>
               </div>
@@ -296,7 +297,7 @@ export default function SalesPage() {
                 <div className="ml-3 sm:ml-5 w-0 flex-1">
                   <dl>
                     <dt className="text-xs sm:text-sm font-medium text-gray-500 dark:text-gray-400 truncate">總銷售數量</dt>
-                    <dd className="text-base sm:text-lg font-medium text-purple-600 dark:text-purple-500">{stats.totalQuantity}</dd>
+                    <dd className="text-base sm:text-lg font-medium text-purple-600 dark:text-purple-500">{formatInteger(stats.totalQuantity)}</dd>
                   </dl>
                 </div>
               </div>
@@ -316,7 +317,7 @@ export default function SalesPage() {
                 <div className="ml-3 sm:ml-5 w-0 flex-1">
                   <dl>
                     <dt className="text-xs sm:text-sm font-medium text-gray-500 dark:text-gray-400 truncate">平均單價</dt>
-                    <dd className="text-base sm:text-lg font-medium text-orange-600 dark:text-orange-500">${stats.avgPrice.toFixed(2)}</dd>
+                    <dd className="text-base sm:text-lg font-medium text-orange-600 dark:text-orange-500">{formatCurrency(stats.avgPrice)}</dd>
                   </dl>
                 </div>
               </div>
@@ -443,13 +444,13 @@ export default function SalesPage() {
                         {sale.shipping_method || '-'}
                       </td>
                       <td className="px-3 sm:px-6 py-3 sm:py-4 whitespace-nowrap text-center text-xs sm:text-sm text-gray-900 dark:text-gray-100 hidden md:table-cell">
-                        ${sale.unit_price.toFixed(2)}
+                        {formatCurrency(sale.unit_price)}
                       </td>
                       <td className="px-3 sm:px-6 py-3 sm:py-4 whitespace-nowrap text-center text-xs sm:text-sm font-medium text-gray-900 dark:text-gray-100 hidden sm:table-cell">
-                        {sale.quantity}
+                        {formatInteger(sale.quantity)}
                       </td>
                       <td className="px-3 sm:px-6 py-3 sm:py-4 whitespace-nowrap text-center text-xs sm:text-sm font-bold text-gray-900 dark:text-gray-100">
-                        ${sale.total_amount.toFixed(2)}
+                        {formatCurrency(sale.total_amount)}
                       </td>
                       <td className="px-3 sm:px-6 py-3 sm:py-4 text-xs sm:text-sm text-gray-600 dark:text-gray-400 max-w-xs hidden lg:table-cell">
                         <div className="truncate" title={sale.note || ''}>
@@ -672,7 +673,7 @@ function SaleModal({
                   const avgCost = product.avg_unit_cost || 0
                   return (
                     <option key={product.id} value={product.id}>
-                      {product.product_name} {product.color ? `(${product.color})` : ''} - 庫存: {product.total_stock} (成本: ${avgCost.toFixed(2)})
+                      {product.product_name} {product.color ? `(${product.color})` : ''} - 庫存: {formatInteger(product.total_stock)} (成本: {formatCurrency(avgCost)})
                     </option>
                   )
                 })}
@@ -693,7 +694,7 @@ function SaleModal({
                   .filter(size => (selectedProduct?.size_stock[size] || 0) > 0)
                   .map(size => (
                     <option key={size} value={size}>
-                      {size} - 庫存: {selectedProduct?.size_stock[size] || 0}
+                      {size} - 庫存: {formatInteger(selectedProduct?.size_stock[size] || 0)}
                     </option>
                   ))}
               </select>
@@ -768,7 +769,7 @@ function SaleModal({
 
           <div className="bg-gray-100 dark:bg-gray-900 p-3 sm:p-4 rounded transition-colors">
             <p className="text-base sm:text-lg font-bold text-gray-900 dark:text-gray-100">
-              總計: ${calculateTotal()}
+              總計: {formatCurrency(parseFloat(calculateTotal()))}
             </p>
           </div>
 
@@ -872,10 +873,10 @@ function EditSaleModal({
                 <span className="text-gray-500 dark:text-gray-400">尺寸:</span> <span className="text-gray-900 dark:text-gray-100">{sale.size || '-'}</span>
               </div>
               <div>
-                <span className="text-gray-500 dark:text-gray-400">數量:</span> <span className="text-gray-900 dark:text-gray-100">{sale.quantity}</span>
+                <span className="text-gray-500 dark:text-gray-400">數量:</span> <span className="text-gray-900 dark:text-gray-100">{formatInteger(sale.quantity)}</span>
               </div>
               <div>
-                <span className="text-gray-500 dark:text-gray-400">原單價:</span> <span className="text-gray-900 dark:text-gray-100">${sale.unit_price.toFixed(2)}</span>
+                <span className="text-gray-500 dark:text-gray-400">原單價:</span> <span className="text-gray-900 dark:text-gray-100">{formatCurrency(sale.unit_price)}</span>
               </div>
             </div>
             <p className="text-xs text-gray-500 dark:text-gray-400 mt-2">
@@ -964,7 +965,7 @@ function EditSaleModal({
 
           <div className="bg-gray-100 dark:bg-gray-900 p-3 sm:p-4 rounded transition-colors">
             <p className="text-base sm:text-lg font-bold text-gray-900 dark:text-gray-100">
-              總計: ${calculateTotal()}
+              總計: {formatCurrency(parseFloat(calculateTotal()))}
             </p>
           </div>
 
