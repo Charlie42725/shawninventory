@@ -441,60 +441,68 @@ export async function PUT(request: Request) {
       const newTotalCost = finalUnitCost * newTotalQuantity
       const oldTotalCost = stockInRecord.total_cost
 
-      const newTotalCostValue = product.total_cost_value - oldTotalCost + newTotalCost
-      const newAvgUnitCost = newProductTotalStock > 0
-        ? newTotalCostValue / newProductTotalStock
-        : 0
-
       updateData.unit_cost = finalUnitCost
       updateData.total_cost = newTotalCost
 
-      // 更新產品
+      // === 重新計算產品成本（使用完全重算而非增量計算） ===
+      // 查詢所有進貨記錄
+      let stockInQueryForCost = supabaseAdmin
+        .from('stock_in')
+        .select('id, total_cost, total_quantity')
+        .eq('category_id', product.category_id)
+        .eq('product_name', product.product_name)
+
+      if (product.color) {
+        stockInQueryForCost = stockInQueryForCost.eq('color', product.color)
+      } else {
+        stockInQueryForCost = stockInQueryForCost.is('color', null)
+      }
+
+      const { data: allStockInsForCost } = await stockInQueryForCost
+
+      // 計算總進貨成本和數量（包含當前修改）
+      let totalStockInCostCalc = 0
+      let totalStockInQtyCalc = 0
+
+      allStockInsForCost?.forEach(si => {
+        if (si.id === parseInt(id)) {
+          totalStockInCostCalc += newTotalCost
+          totalStockInQtyCalc += newTotalQuantity
+        } else {
+          totalStockInCostCalc += si.total_cost || 0
+          totalStockInQtyCalc += si.total_quantity || 0
+        }
+      })
+
+      // 計算新的平均成本（基於總進貨）
+      const newAvgUnitCost = totalStockInQtyCalc > 0 ? totalStockInCostCalc / totalStockInQtyCalc : 0
+
+      // 先更新產品的庫存和平均成本（不更新 total_cost_value，讓 updateProductSalesCOGS 處理）
       await supabaseAdmin
         .from('products')
         .update({
           size_stock: newSizeStock,
           total_stock: newProductTotalStock,
           avg_unit_cost: newAvgUnitCost,
-          total_cost_value: newTotalCostValue,
           updated_at: new Date().toISOString(),
         })
         .eq('id', product.id)
 
-      // 自動更新該產品所有銷售記錄的 COGS（方案 B）
+      // 調用 updateProductSalesCOGS 來：
+      // - 用新平均成本重新計算所有銷售的 COGS
+      // - 用 總進貨成本 - 總新COGS 來計算並更新 total_cost_value
       const oldAvgCost = product.avg_unit_cost
-      if (Math.abs(newAvgUnitCost - oldAvgCost) > 0.01) {
-        // 查詢該產品所有進貨記錄（包含這次修改後的），計算總進貨成本
-        let stockInQuery = supabaseAdmin
-          .from('stock_in')
-          .select('total_cost')
-          .eq('category_id', product.category_id)
-          .eq('product_name', product.product_name)
+      const { updated } = await updateProductSalesCOGS(product.id, newAvgUnitCost, totalStockInCostCalc)
 
-        if (product.color) {
-          stockInQuery = stockInQuery.eq('color', product.color)
-        } else {
-          stockInQuery = stockInQuery.is('color', null)
-        }
-
-        const { data: allStockIns } = await stockInQuery
-        // 排除當前進貨的舊成本，加上新成本
-        const otherStockInsCost = allStockIns
-          ?.filter(s => s !== null)
-          .reduce((sum, s) => sum + (s.total_cost || 0), 0) || 0
-        const totalStockInCost = otherStockInsCost - stockInRecord.total_cost + newTotalCost
-
-        const { updated } = await updateProductSalesCOGS(product.id, newAvgUnitCost, totalStockInCost)
-        if (updated > 0) {
-          await logCOGSUpdate(
-            product.id,
-            'stock_in_edit',
-            parseInt(id),
-            oldAvgCost,
-            newAvgUnitCost,
-            updated
-          )
-        }
+      if (updated > 0) {
+        await logCOGSUpdate(
+          product.id,
+          'stock_in_edit',
+          parseInt(id),
+          oldAvgCost,
+          newAvgUnitCost,
+          updated
+        )
       }
 
       // 記錄庫存異動
@@ -522,55 +530,64 @@ export async function PUT(request: Request) {
       updateData.unit_cost = newUnitCost
       updateData.total_cost = newTotalCost
 
-      // 重新計算產品的平均成本
-      const newTotalCostValue = product.total_cost_value - oldTotalCost + newTotalCost
-      const newAvgUnitCost = product.total_stock > 0
-        ? newTotalCostValue / product.total_stock
-        : 0
+      // === 完全重算：從進貨記錄計算新平均成本，並更新銷售COGS ===
+      // 1. 查詢該產品所有進貨記錄，計算總進貨成本和數量
+      let stockInQuery = supabaseAdmin
+        .from('stock_in')
+        .select('id, total_cost, total_quantity')
+        .eq('category_id', product.category_id)
+        .eq('product_name', product.product_name)
 
+      if (product.color) {
+        stockInQuery = stockInQuery.eq('color', product.color)
+      } else {
+        stockInQuery = stockInQuery.is('color', null)
+      }
+
+      const { data: allStockIns } = await stockInQuery
+
+      // 計算總進貨成本和數量（包含當前修改後的成本）
+      let totalStockInCost = 0
+      let totalStockInQty = 0
+
+      allStockIns?.forEach(si => {
+        // 如果是當前正在修改的進貨記錄，使用新成本
+        if (si.id === parseInt(id)) {
+          totalStockInCost += newTotalCost
+          totalStockInQty += si.total_quantity || 0
+        } else {
+          totalStockInCost += si.total_cost || 0
+          totalStockInQty += si.total_quantity || 0
+        }
+      })
+
+      // 2. 計算新的平均成本（基於總進貨）
+      const newAvgUnitCost = totalStockInQty > 0 ? totalStockInCost / totalStockInQty : 0
+
+      // 3. 先更新產品的平均成本
       await supabaseAdmin
         .from('products')
         .update({
           avg_unit_cost: newAvgUnitCost,
-          total_cost_value: newTotalCostValue,
           updated_at: new Date().toISOString(),
         })
         .eq('id', product.id)
 
-      // 自動更新該產品所有銷售記錄的 COGS（方案 B）
+      // 4. 調用 updateProductSalesCOGS 來：
+      //    - 用新平均成本重新計算所有銷售的 COGS
+      //    - 用 總進貨成本 - 總新COGS 來計算 total_cost_value
       const oldAvgCost = product.avg_unit_cost
-      if (Math.abs(newAvgUnitCost - oldAvgCost) > 0.01) {
-        // 查詢該產品所有進貨記錄，計算總進貨成本
-        let stockInQuery = supabaseAdmin
-          .from('stock_in')
-          .select('total_cost')
-          .eq('category_id', product.category_id)
-          .eq('product_name', product.product_name)
+      const { updated } = await updateProductSalesCOGS(product.id, newAvgUnitCost, totalStockInCost)
 
-        if (product.color) {
-          stockInQuery = stockInQuery.eq('color', product.color)
-        } else {
-          stockInQuery = stockInQuery.is('color', null)
-        }
-
-        const { data: allStockIns } = await stockInQuery
-        // 排除當前進貨的舊成本，加上新成本
-        const otherStockInsCost = allStockIns
-          ?.filter(s => s !== null)
-          .reduce((sum, s) => sum + (s.total_cost || 0), 0) || 0
-        const totalStockInCost = otherStockInsCost - oldTotalCost + newTotalCost
-
-        const { updated } = await updateProductSalesCOGS(product.id, newAvgUnitCost, totalStockInCost)
-        if (updated > 0) {
-          await logCOGSUpdate(
-            product.id,
-            'stock_in_edit',
-            parseInt(id),
-            oldAvgCost,
-            newAvgUnitCost,
-            updated
-          )
-        }
+      if (updated > 0) {
+        await logCOGSUpdate(
+          product.id,
+          'stock_in_edit',
+          parseInt(id),
+          oldAvgCost,
+          newAvgUnitCost,
+          updated
+        )
       }
     }
 
