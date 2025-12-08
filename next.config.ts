@@ -2,6 +2,7 @@ import type { NextConfig } from "next";
 
 const nextConfig: NextConfig = {
   /* config options here */
+  turbopack: {},
   webpack: (config, { isServer }) => {
     // Fix for "Module not found: Can't resolve 'fs'" error
     if (!isServer) {
