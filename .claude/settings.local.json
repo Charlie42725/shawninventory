@@ -17,7 +17,8 @@
       "Bash(node fix-cost-value.js:*)",
       "Bash(node check-cost-after-sale.js:*)",
       "Bash(npx supabase:*)",
-      "Bash(node:*)"
+      "Bash(node:*)",
+      "Bash(npm run build:*)"
     ],
     "deny": [],
     "ask": []
