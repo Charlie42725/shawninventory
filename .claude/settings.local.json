@@ -14,7 +14,10 @@
       "Bash(node show-stock-issues.js:*)",
       "Bash(node check-sale-size.js:*)",
       "Bash(node fix-nosizes-products.js:*)",
-      "Bash(node fix-cost-value.js:*)"
+      "Bash(node fix-cost-value.js:*)",
+      "Bash(node check-cost-after-sale.js:*)",
+      "Bash(npx supabase:*)",
+      "Bash(node:*)"
     ],
     "deny": [],
     "ask": []

@@ -178,6 +178,7 @@ export async function processSale(saleData: {
   unit_price: number
   quantity: number
   total_amount: number
+  cost_of_goods_sold?: number | null  // 新增：銷售成本字段
   note?: string | null
   created_by?: string | null
 }) {
@@ -222,13 +223,28 @@ export async function processSale(saleData: {
 
     // 4. 扣減庫存
     const newSizeStock = { ...sizeStock }
-    let newTotalStock = product.total_stock - saleData.quantity
 
-    // 如果是有尺寸的產品，扣減對應尺寸的庫存
-    if (saleData.size && Object.keys(sizeStock).length > 0) {
-      newSizeStock[saleData.size] = (newSizeStock[saleData.size] || 0) - saleData.quantity
+    // 如果產品使用尺寸管理（size_stock 不為空）
+    if (Object.keys(sizeStock).length > 0) {
+      // 確定要扣減的尺寸 key
+      const sizeKey = saleData.size || 'default'
+
+      // 扣減對應尺寸的庫存
+      if (newSizeStock[sizeKey] !== undefined) {
+        newSizeStock[sizeKey] = Math.max(0, (newSizeStock[sizeKey] || 0) - saleData.quantity)
+      } else {
+        // 如果指定的尺寸不存在，嘗試 default
+        if (newSizeStock['default'] !== undefined) {
+          newSizeStock['default'] = Math.max(0, (newSizeStock['default'] || 0) - saleData.quantity)
+        }
+      }
     }
-    // 無尺寸產品不需要處理 size_stock（保持為空對象）
+    // 無尺寸產品（size_stock 為空對象）不需要處理 size_stock
+
+    // 計算新的總庫存（從 size_stock 計算以確保一致性）
+    const newTotalStock = Object.keys(newSizeStock).length > 0
+      ? Object.values(newSizeStock).reduce((sum, qty) => sum + qty, 0)
+      : product.total_stock - saleData.quantity
 
     // 計算新的成本 (扣減實際銷售的成本)
     // 使用加權平均成本，銷售成本 = 平均單位成本 × 銷售數量
@@ -237,6 +253,11 @@ export async function processSale(saleData: {
 
     // 平均成本保持不變（即使庫存清空也要保留，用於財務報表計算）
     const newAvgUnitCost = product.avg_unit_cost
+
+    // 將計算出的 COGS 加入銷售數據（如果未提供）
+    if (saleData.cost_of_goods_sold === undefined || saleData.cost_of_goods_sold === null) {
+      saleData.cost_of_goods_sold = costOfGoodsSold
+    }
 
     const { error: updateError } = await supabaseAdmin
       .from('products')

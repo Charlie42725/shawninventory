@@ -1,19 +1,22 @@
 ﻿import { supabaseAdmin } from "@/lib/supabase";
 import { NextResponse } from "next/server";
 
-// Helper function to calculate sales cost using products data
+// Helper function to calculate sales cost using COGS from sales records
+// 符合會計原則：使用銷售時記錄的實際成本，而不是產品當前成本
 function calculateSalesCostFromInventory(sales: any[], products: any[]) {
   let totalSalesCost = 0;
 
   for (const sale of sales) {
-    // Try to find matching product by product_id
-    const product = products.find((item: any) => item.id === sale.product_id);
-
-    if (product && product.avg_unit_cost) {
-      // Use average unit cost from products table
-      totalSalesCost += (product.avg_unit_cost * sale.quantity);
+    // 優先使用銷售記錄中保存的實際 COGS
+    if (sale.cost_of_goods_sold && sale.cost_of_goods_sold > 0) {
+      totalSalesCost += sale.cost_of_goods_sold;
+    } else {
+      // 如果沒有保存 COGS（歷史數據），則使用產品當前平均成本估算
+      const product = products.find((item: any) => item.id === sale.product_id);
+      if (product && product.avg_unit_cost) {
+        totalSalesCost += (product.avg_unit_cost * sale.quantity);
+      }
     }
-    // If no matching product found, cost is 0 (don't estimate)
   }
 
   return totalSalesCost;
