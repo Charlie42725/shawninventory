@@ -62,9 +62,36 @@ export async function processStockIn(stockInData: StockIn) {
 
       const newTotalStock = previousStock + stockInData.total_quantity
 
-      // 計算新的加權平均成本
-      const newTotalCostValue = previousTotalCostValue + stockInData.total_cost
-      const newAvgUnitCost = newTotalStock > 0 ? newTotalCostValue / newTotalStock : 0
+      // === 正確計算平均成本：基於總進貨而非當前庫存 ===
+      // 查詢該產品的所有進貨記錄，計算總進貨成本和數量
+      let stockInQuery = supabaseAdmin
+        .from('stock_in')
+        .select('total_cost, total_quantity')
+        .eq('category_id', existingProduct.category_id)
+        .eq('product_name', existingProduct.product_name)
+
+      if (existingProduct.color) {
+        stockInQuery = stockInQuery.eq('color', existingProduct.color)
+      } else {
+        stockInQuery = stockInQuery.is('color', null)
+      }
+
+      const { data: allStockIns } = await stockInQuery
+
+      // 計算總進貨成本和數量（包含所有進貨記錄）
+      let totalStockInCost = 0
+      let totalStockInQty = 0
+
+      allStockIns?.forEach(si => {
+        totalStockInCost += si.total_cost || 0
+        totalStockInQty += si.total_quantity || 0
+      })
+
+      // 計算新的平均成本（基於總進貨數量，而非當前庫存）
+      const newAvgUnitCost = totalStockInQty > 0 ? totalStockInCost / totalStockInQty : 0
+
+      // 當前庫存的成本價值 = 當前庫存數量 × 平均成本
+      const newTotalCostValue = newTotalStock * newAvgUnitCost
 
       // 更新產品
       const { error: updateError } = await supabaseAdmin

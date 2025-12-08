@@ -72,9 +72,14 @@
 </head>
 <body>
     <div class="container">
-        <h1>🔧 修復總成本價值</h1>
-        <p>此工具將修復所有產品的 <code>total_cost_value</code> 欄位。</p>
-        <p><strong>計算公式:</strong> total_cost_value = total_stock × avg_unit_cost</p>
+        <h1>🔧 修復產品成本價值</h1>
+        <p>此工具將修復所有產品的 <code>avg_unit_cost</code> 和 <code>total_cost_value</code> 欄位。</p>
+        <p><strong>計算公式:</strong></p>
+        <ul>
+            <li>avg_unit_cost = 總進貨成本 ÷ 總進貨數量</li>
+            <li>total_cost_value = 當前庫存 × avg_unit_cost</li>
+        </ul>
+        <p><em>註：這個修復會從進貨記錄重新計算所有產品的平均成本和庫存價值。</em></p>
 
         <button id="fixBtn" onclick="fixTotalCostValue()">開始修復</button>
 
@@ -104,15 +109,35 @@
 
                 if (data.success) {
                     resultDiv.className = 'success';
+                    let detailsHtml = '';
+
+                    if (data.results && data.results.length > 0) {
+                        detailsHtml = '<h4>修復詳情:</h4><div style="max-height: 300px; overflow-y: auto;">';
+                        data.results.forEach(r => {
+                            detailsHtml += `
+                                <div style="background: #f8f9fa; padding: 10px; margin: 5px 0; border-left: 3px solid #28a745;">
+                                    <strong>${r.name}</strong> (ID: ${r.id})<br>
+                                    庫存: ${r.totalStock}<br>
+                                    平均成本: $${r.oldAvgCost.toFixed(2)} → $${r.newAvgCost.toFixed(2)}
+                                    <span style="color: ${r.avgCostDiff >= 0 ? 'green' : 'red'}">
+                                        (${r.avgCostDiff >= 0 ? '+' : ''}${r.avgCostDiff.toFixed(2)})
+                                    </span><br>
+                                    庫存價值: $${r.oldValue.toFixed(2)} → $${r.newValue.toFixed(2)}
+                                    <span style="color: ${r.valueDiff >= 0 ? 'green' : 'red'}">
+                                        (${r.valueDiff >= 0 ? '+' : ''}${r.valueDiff.toFixed(2)})
+                                    </span>
+                                </div>
+                            `;
+                        });
+                        detailsHtml += '</div>';
+                    }
+
                     resultDiv.innerHTML = `
                         <h3>✅ 修復成功！</h3>
                         <p><strong>總產品數:</strong> ${data.total}</p>
                         <p><strong>已修復:</strong> ${data.fixed}</p>
                         <p><strong>原本正確:</strong> ${data.alreadyCorrect}</p>
-                        ${data.results && data.results.length > 0 ? `
-                            <h4>修復詳情:</h4>
-                            <pre>${JSON.stringify(data.results, null, 2)}</pre>
-                        ` : ''}
+                        ${detailsHtml}
                     `;
                 } else {
                     throw new Error(data.error || '修復失敗');

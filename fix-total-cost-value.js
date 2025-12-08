@@ -11,7 +11,7 @@ async function fixTotalCostValue() {
   // 獲取所有產品
   const { data: products, error } = await supabase
     .from('products')
-    .select('id, product_name, total_stock, avg_unit_cost, total_cost_value')
+    .select('id, product_name, category_id, color, total_stock, avg_unit_cost, total_cost_value')
     .order('id')
 
   if (error) {
@@ -25,19 +25,52 @@ async function fixTotalCostValue() {
   let alreadyCorrect = 0
 
   for (const product of products) {
-    const correctValue = product.total_stock * product.avg_unit_cost
-    const diff = Math.abs(product.total_cost_value - correctValue)
+    // === 重新計算正確的平均成本和庫存價值 ===
+    // 1. 查詢該產品的所有進貨記錄
+    let stockInQuery = supabase
+      .from('stock_in')
+      .select('total_cost, total_quantity')
+      .eq('category_id', product.category_id)
+      .eq('product_name', product.product_name)
 
-    if (diff > 0.01) {
+    if (product.color) {
+      stockInQuery = stockInQuery.eq('color', product.color)
+    } else {
+      stockInQuery = stockInQuery.is('color', null)
+    }
+
+    const { data: stockIns } = await stockInQuery
+
+    // 2. 計算總進貨成本和數量
+    let totalStockInCost = 0
+    let totalStockInQty = 0
+
+    stockIns?.forEach(si => {
+      totalStockInCost += si.total_cost || 0
+      totalStockInQty += si.total_quantity || 0
+    })
+
+    // 3. 計算正確的平均成本（基於總進貨）
+    const correctAvgUnitCost = totalStockInQty > 0 ? totalStockInCost / totalStockInQty : 0
+
+    // 4. 計算正確的庫存價值（基於當前庫存）
+    const correctTotalCostValue = product.total_stock * correctAvgUnitCost
+
+    // 檢查是否需要修復
+    const avgCostDiff = Math.abs(product.avg_unit_cost - correctAvgUnitCost)
+    const costValueDiff = Math.abs(product.total_cost_value - correctTotalCostValue)
+
+    if (avgCostDiff > 0.01 || costValueDiff > 0.01) {
       console.log(`修復: ID ${product.id} - ${product.product_name}`)
-      console.log(`  庫存: ${product.total_stock}, 平均成本: $${product.avg_unit_cost.toFixed(2)}`)
-      console.log(`  舊值: $${product.total_cost_value.toFixed(2)}`)
-      console.log(`  新值: $${correctValue.toFixed(2)}`)
+      console.log(`  庫存: ${product.total_stock}`)
+      console.log(`  平均成本: $${product.avg_unit_cost.toFixed(2)} -> $${correctAvgUnitCost.toFixed(2)}`)
+      console.log(`  庫存價值: $${product.total_cost_value.toFixed(2)} -> $${correctTotalCostValue.toFixed(2)}`)
 
       const { error: updateError } = await supabase
         .from('products')
         .update({
-          total_cost_value: correctValue,
+          avg_unit_cost: correctAvgUnitCost,
+          total_cost_value: correctTotalCostValue,
           updated_at: new Date().toISOString()
         })
         .eq('id', product.id)
