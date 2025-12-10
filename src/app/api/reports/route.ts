@@ -135,23 +135,45 @@ export async function GET(request: Request) {
     // Generate monthly trend data
     const monthlySales = generateMonthlyTrendData(sales, expenses, products);
 
-    // Calculate top products
+    // Calculate top products with COGS and gross margin
     const productStats = new Map();
     sales.forEach((sale) => {
       const model = sale.model || sale.product_name || 'Unknown';
       const quantity = Number(sale.quantity) || 0;
       const revenue = (Number(sale.unit_price) || 0) * quantity;
 
+      // 計算 COGS（優先使用銷售記錄中的實際成本）
+      let cogs = 0;
+      if (sale.cost_of_goods_sold && sale.cost_of_goods_sold > 0) {
+        cogs = sale.cost_of_goods_sold;
+      } else {
+        // 如果沒有保存 COGS，使用產品當前平均成本估算
+        const product = products.find((item: any) => item.id === sale.product_id);
+        if (product && product.avg_unit_cost) {
+          cogs = product.avg_unit_cost * quantity;
+        }
+      }
+
       if (!productStats.has(model)) {
-        productStats.set(model, { model, quantity: 0, revenue: 0 });
+        productStats.set(model, { model, quantity: 0, revenue: 0, cogs: 0 });
       }
 
       const stats = productStats.get(model);
       stats.quantity += quantity;
       stats.revenue += revenue;
+      stats.cogs += cogs;
     });
 
     const topProducts = Array.from(productStats.values())
+      .map(product => {
+        const grossProfit = product.revenue - product.cogs;
+        const grossMargin = product.revenue > 0 ? (grossProfit / product.revenue) * 100 : 0;
+        return {
+          ...product,
+          grossProfit,
+          grossMargin
+        };
+      })
       .sort((a, b) => b.revenue - a.revenue)
       .slice(0, 10);
 

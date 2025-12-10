@@ -17,6 +17,9 @@ interface ReportData {
     model: string
     quantity: number
     revenue: number
+    cogs: number
+    grossProfit: number
+    grossMargin: number
   }>
   monthlySales: Array<{
     month: string
@@ -420,6 +423,9 @@ export default function ReportsPage() {
                   <th className="text-left py-2 sm:py-3 px-2 sm:px-4 text-xs sm:text-sm font-semibold text-gray-700 dark:text-gray-300">產品型號</th>
                   <th className="text-right py-2 sm:py-3 px-2 sm:px-4 text-xs sm:text-sm font-semibold text-gray-700 dark:text-gray-300 hidden md:table-cell">銷售數量</th>
                   <th className="text-right py-2 sm:py-3 px-2 sm:px-4 text-xs sm:text-sm font-semibold text-gray-700 dark:text-gray-300">銷售額</th>
+                  <th className="text-right py-2 sm:py-3 px-2 sm:px-4 text-xs sm:text-sm font-semibold text-gray-700 dark:text-gray-300 hidden lg:table-cell">成本</th>
+                  <th className="text-right py-2 sm:py-3 px-2 sm:px-4 text-xs sm:text-sm font-semibold text-gray-700 dark:text-gray-300 hidden xl:table-cell">毛利</th>
+                  <th className="text-right py-2 sm:py-3 px-2 sm:px-4 text-xs sm:text-sm font-semibold text-gray-700 dark:text-gray-300">毛利率</th>
                   <th className="text-right py-2 sm:py-3 px-2 sm:px-4 text-xs sm:text-sm font-semibold text-gray-700 dark:text-gray-300 hidden sm:table-cell">佔比</th>
                 </tr>
               </thead>
@@ -454,11 +460,28 @@ export default function ReportsPage() {
                       </span>
                     </td>
                     <td className="py-3 px-4 font-semibold text-gray-900 dark:text-gray-100">{product.model || 'Unknown'}</td>
-                    <td className="py-3 px-4 text-right font-medium text-gray-900 dark:text-gray-100 hidden md:table-cell">{product.quantity || 0}</td>
+                    <td className="py-3 px-4 text-right font-medium text-gray-900 dark:text-gray-100 hidden md:table-cell">{formatInteger(product.quantity || 0)}</td>
                     <td className="py-3 px-4 text-right font-semibold text-green-700 dark:text-green-500">
                       {formatCurrency(product.revenue || 0)}
                     </td>
-                    <td className="py-3 px-4 text-right font-medium text-blue-700 dark:text-blue-500 hidden sm:table-cell">
+                    <td className="py-3 px-4 text-right font-medium text-orange-700 dark:text-orange-500 hidden lg:table-cell">
+                      {formatCurrency(product.cogs || 0)}
+                    </td>
+                    <td className="py-3 px-4 text-right font-semibold text-blue-700 dark:text-blue-500 hidden xl:table-cell">
+                      {formatCurrency(product.grossProfit || 0)}
+                    </td>
+                    <td className="py-3 px-4 text-right">
+                      <span className={`px-2 py-1 rounded-full text-xs font-semibold ${
+                        (product.grossMargin || 0) >= 30
+                          ? 'bg-green-100 dark:bg-green-900/30 text-green-800 dark:text-green-400'
+                          : (product.grossMargin || 0) >= 15
+                          ? 'bg-yellow-100 dark:bg-yellow-900/30 text-yellow-800 dark:text-yellow-400'
+                          : 'bg-red-100 dark:bg-red-900/30 text-red-800 dark:text-red-400'
+                      }`}>
+                        {(product.grossMargin || 0).toFixed(1)}%
+                      </span>
+                    </td>
+                    <td className="py-3 px-4 text-right font-medium text-gray-700 dark:text-gray-400 hidden sm:table-cell">
                       {reportData.totalSales > 0 && (product.revenue || 0) > 0 ?
                         (((product.revenue || 0) / reportData.totalSales) * 100).toFixed(1) : '0.0'}%
                     </td>
