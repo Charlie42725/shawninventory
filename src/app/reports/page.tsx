@@ -19,6 +19,7 @@ import {
   Legend,
   ResponsiveContainer
 } from 'recharts'
+import * as XLSX from 'xlsx'
 
 interface ReportData {
   totalSales: number
@@ -107,22 +108,307 @@ export default function ReportsPage() {
   }, [fetchReportData])
 
   const handleExport = async (format: 'excel' | 'pdf') => {
+    if (!reportData) {
+      alert('沒有數據可供導出')
+      return
+    }
+
     setExporting(true)
     try {
-      // 模擬導出功能
-      await new Promise(resolve => setTimeout(resolve, 2000))
-      
       if (format === 'excel') {
-        alert('Excel 報表已生成並下載')
+        exportToExcel()
+        // 給一點時間讓瀏覽器處理下載
+        await new Promise(resolve => setTimeout(resolve, 500))
+        alert(`✅ Excel 報表已成功生成！\n\n📋 包含內容：\n• 財務摘要\n• 銷售趨勢\n• 熱銷產品\n• 費用明細\n\n✨ 完整中文版本，包含4個工作表`)
       } else {
-        alert('PDF 報表已生成並下載')
+        await exportToPDF()
+        await new Promise(resolve => setTimeout(resolve, 500))
+        alert(`✅ PDF Report Generated Successfully!\n\n📋 Contents:\n• Financial Summary\n• Top 10 Products\n• Sales Trend\n• Expense Breakdown\n\n📄 English version PDF\n💡 Tip: Use Excel export for Chinese language support`)
       }
     } catch (error) {
       console.error('Error exporting report:', error)
-      alert('導出失敗，請重試')
+      alert('❌ 導出失敗，請重試\n\n錯誤信息：' + (error instanceof Error ? error.message : '未知錯誤'))
     } finally {
       setExporting(false)
     }
+  }
+
+  const exportToExcel = () => {
+    if (!reportData) return
+
+    // 創建工作簿
+    const wb = XLSX.utils.book_new()
+
+    // 1. 財務摘要工作表
+    const summaryData = [
+      ['財務報表摘要', ''],
+      ['日期範圍', getDateRangeText()],
+      ['數據粒度', granularity === 'day' ? '日' : granularity === 'week' ? '週' : '月'],
+      ['生成時間', new Date().toLocaleString('zh-TW')],
+      ['', ''],
+      ['項目', '金額'],
+      ['總銷售額', reportData.totalSales],
+      ['總費用', reportData.totalExpenses],
+      ['　├ 進貨成本', reportData.totalStockCost],
+      ['　└ 營運費用', reportData.totalOperatingExpenses],
+      ['毛利潤', reportData.grossProfit],
+      ['淨利潤', reportData.netProfit],
+      ['銷售數量', reportData.productsSold],
+      ['毛利率', reportData.totalSales > 0 ? `${((reportData.grossProfit / reportData.totalSales) * 100).toFixed(2)}%` : '0%'],
+      ['淨利率', reportData.totalSales > 0 ? `${((reportData.netProfit / reportData.totalSales) * 100).toFixed(2)}%` : '0%']
+    ]
+    const wsSummary = XLSX.utils.aoa_to_sheet(summaryData)
+
+    // 設置列寬
+    wsSummary['!cols'] = [{ wch: 20 }, { wch: 20 }]
+    XLSX.utils.book_append_sheet(wb, wsSummary, '財務摘要')
+
+    // 2. 銷售趨勢工作表
+    const salesTrendData = [
+      ['時間', '銷售額', '進貨成本', '營運費用', '總費用', '毛利潤', '淨利潤'],
+      ...reportData.monthlySales.map(item => [
+        item.monthName,
+        item.sales,
+        item.stockCost,
+        item.operatingExpenses,
+        item.totalExpenses,
+        item.grossProfit,
+        item.netProfit
+      ])
+    ]
+    const wsSalesTrend = XLSX.utils.aoa_to_sheet(salesTrendData)
+    wsSalesTrend['!cols'] = [{ wch: 15 }, { wch: 15 }, { wch: 15 }, { wch: 15 }, { wch: 15 }, { wch: 15 }, { wch: 15 }]
+    XLSX.utils.book_append_sheet(wb, wsSalesTrend, '銷售趨勢')
+
+    // 3. 熱銷產品工作表
+    const topProductsData = [
+      ['產品型號', '銷售數量', '銷售收入', '進貨成本', '毛利潤', '毛利率'],
+      ...reportData.topProducts.map(item => [
+        item.model,
+        item.quantity,
+        item.revenue,
+        item.cogs,
+        item.grossProfit,
+        `${item.grossMargin.toFixed(2)}%`
+      ])
+    ]
+    const wsTopProducts = XLSX.utils.aoa_to_sheet(topProductsData)
+    wsTopProducts['!cols'] = [{ wch: 20 }, { wch: 12 }, { wch: 15 }, { wch: 15 }, { wch: 15 }, { wch: 12 }]
+    XLSX.utils.book_append_sheet(wb, wsTopProducts, '熱銷產品')
+
+    // 4. 費用明細工作表
+    const expensesData = [
+      ['費用類別', '金額', '佔比'],
+      ...reportData.expensesBreakdown.map(item => [
+        item.category,
+        item.amount,
+        reportData.totalExpenses > 0 ? `${((item.amount / reportData.totalExpenses) * 100).toFixed(2)}%` : '0%'
+      ])
+    ]
+    const wsExpenses = XLSX.utils.aoa_to_sheet(expensesData)
+    wsExpenses['!cols'] = [{ wch: 15 }, { wch: 15 }, { wch: 12 }]
+    XLSX.utils.book_append_sheet(wb, wsExpenses, '費用明細')
+
+    // 生成文件名
+    const fileName = `財務報表_${getDateRangeText()}_${new Date().toLocaleDateString('zh-TW').replace(/\//g, '')}.xlsx`
+
+    // 下載文件
+    XLSX.writeFile(wb, fileName)
+  }
+
+  const exportToPDF = async () => {
+    if (!reportData) return
+
+    // 確保在客戶端環境
+    if (typeof window === 'undefined') {
+      throw new Error('PDF 生成必須在瀏覽器環境中執行')
+    }
+
+    // 動態導入 jsPDF 和 autoTable（確保只在客戶端執行）
+    const [jsPDFModule, autoTableModule] = await Promise.all([
+      import('jspdf'),
+      import('jspdf-autotable')
+    ])
+
+    const jsPDF = jsPDFModule.default
+    const autoTable = autoTableModule.default
+
+    // 創建 PDF 文檔 (A4, portrait)
+    // 暫時使用標準字體，不加載中文字體以避免錯誤
+    const doc = new jsPDF({
+      orientation: 'portrait',
+      unit: 'mm',
+      format: 'a4'
+    })
+
+    // 使用標準字體（支持英文和數字，中文會顯示為方框）
+    doc.setFont('helvetica')
+
+    let yPos = 20
+
+    // Title
+    doc.setFontSize(20)
+    doc.text('Financial Report', 105, yPos, { align: 'center' })
+    yPos += 10
+
+    // Subtitle
+    doc.setFontSize(12)
+    doc.text(getDateRangeText(), 105, yPos, { align: 'center' })
+    yPos += 5
+    doc.setFontSize(10)
+    doc.text(`Generated: ${new Date().toLocaleDateString('en-US')}`, 105, yPos, { align: 'center' })
+    yPos += 15
+
+    // Financial Summary Table
+    doc.setFontSize(14)
+    doc.text('Financial Summary', 14, yPos)
+    yPos += 7
+
+    autoTable(doc, {
+      startY: yPos,
+      head: [['Item', 'Amount']],
+      body: [
+        ['Total Sales', formatCurrency(reportData.totalSales)],
+        ['Total Expenses', formatCurrency(reportData.totalExpenses)],
+        ['  - Cost of Goods', formatCurrency(reportData.totalStockCost)],
+        ['  - Operating Expenses', formatCurrency(reportData.totalOperatingExpenses)],
+        ['Gross Profit', formatCurrency(reportData.grossProfit)],
+        ['Net Profit', formatCurrency(reportData.netProfit)],
+        ['Units Sold', formatInteger(reportData.productsSold)],
+        ['Gross Margin', reportData.totalSales > 0 ? `${((reportData.grossProfit / reportData.totalSales) * 100).toFixed(2)}%` : '0%'],
+        ['Net Margin', reportData.totalSales > 0 ? `${((reportData.netProfit / reportData.totalSales) * 100).toFixed(2)}%` : '0%']
+      ],
+      theme: 'grid',
+      headStyles: { fillColor: [79, 70, 229], textColor: 255, font: 'helvetica' },
+      bodyStyles: { font: 'helvetica' },
+      columnStyles: {
+        0: { cellWidth: 80 },
+        1: { cellWidth: 80, halign: 'right' }
+      }
+    })
+
+    // Top Products Table
+    yPos = (doc as any).lastAutoTable.finalY + 15
+
+    // Check if new page is needed
+    if (yPos > 250) {
+      doc.addPage()
+      yPos = 20
+    }
+
+    doc.setFontSize(14)
+    doc.text('Top 10 Products', 14, yPos)
+    yPos += 7
+
+    autoTable(doc, {
+      startY: yPos,
+      head: [['Product', 'Qty', 'Revenue', 'Cost', 'Profit', 'Margin']],
+      body: reportData.topProducts.slice(0, 10).map(item => [
+        item.model,
+        formatInteger(item.quantity),
+        formatCurrency(item.revenue),
+        formatCurrency(item.cogs),
+        formatCurrency(item.grossProfit),
+        `${item.grossMargin.toFixed(1)}%`
+      ]),
+      theme: 'grid',
+      headStyles: { fillColor: [79, 70, 229], textColor: 255, font: 'helvetica' },
+      bodyStyles: { font: 'helvetica' },
+      columnStyles: {
+        1: { halign: 'right' },
+        2: { halign: 'right' },
+        3: { halign: 'right' },
+        4: { halign: 'right' },
+        5: { halign: 'right' }
+      }
+    })
+
+    // New Page - Sales Trend
+    doc.addPage()
+    yPos = 20
+
+    doc.setFontSize(14)
+    doc.text('Sales Trend', 14, yPos)
+    yPos += 7
+
+    autoTable(doc, {
+      startY: yPos,
+      head: [['Period', 'Sales', 'COGS', 'OPEX', 'Total Exp', 'Gross', 'Net']],
+      body: reportData.monthlySales.map(item => [
+        item.monthName,
+        formatCurrency(item.sales),
+        formatCurrency(item.stockCost),
+        formatCurrency(item.operatingExpenses),
+        formatCurrency(item.totalExpenses),
+        formatCurrency(item.grossProfit),
+        formatCurrency(item.netProfit)
+      ]),
+      theme: 'grid',
+      headStyles: { fillColor: [79, 70, 229], textColor: 255, fontSize: 9, font: 'helvetica' },
+      bodyStyles: { fontSize: 8, font: 'helvetica' },
+      columnStyles: {
+        1: { halign: 'right' },
+        2: { halign: 'right' },
+        3: { halign: 'right' },
+        4: { halign: 'right' },
+        5: { halign: 'right' },
+        6: { halign: 'right' }
+      }
+    })
+
+    // Expense Breakdown
+    yPos = (doc as any).lastAutoTable.finalY + 15
+
+    if (yPos > 250) {
+      doc.addPage()
+      yPos = 20
+    }
+
+    doc.setFontSize(14)
+    doc.text('Expense Breakdown', 14, yPos)
+    yPos += 7
+
+    autoTable(doc, {
+      startY: yPos,
+      head: [['Category', 'Amount', 'Percentage']],
+      body: reportData.expensesBreakdown.map(item => [
+        item.category,
+        formatCurrency(item.amount),
+        reportData.totalExpenses > 0 ? `${((item.amount / reportData.totalExpenses) * 100).toFixed(2)}%` : '0%'
+      ]),
+      theme: 'grid',
+      headStyles: { fillColor: [79, 70, 229], textColor: 255, font: 'helvetica' },
+      bodyStyles: { font: 'helvetica' },
+      columnStyles: {
+        1: { halign: 'right' },
+        2: { halign: 'right' }
+      }
+    })
+
+    // Generate filename
+    const fileName = `Financial_Report_${getDateRangeText().replace(/\s+/g, '_')}_${new Date().toLocaleDateString('en-US').replace(/\//g, '-')}.pdf`
+
+    // 下載文件
+    doc.save(fileName)
+  }
+
+  const getDateRangeText = () => {
+    if (useCustomRange && startDate && endDate) {
+      return `${startDate} to ${endDate}`
+    }
+
+    const rangeMap: Record<string, string> = {
+      'today': 'Today',
+      'yesterday': 'Yesterday',
+      'last7days': 'Last 7 Days',
+      'last30days': 'Last 30 Days',
+      'thisMonth': 'This Month',
+      'lastMonth': 'Last Month',
+      'thisYear': 'This Year',
+      'all': 'All Time'
+    }
+
+    return rangeMap[dateRange] || 'Custom Range'
   }
 
   if (loading) {
@@ -242,8 +528,9 @@ export default function ReportsPage() {
           <div className="flex gap-2">
             <button
               onClick={() => handleExport('excel')}
-              disabled={exporting}
-              className="bg-green-600 hover:bg-green-700 disabled:bg-green-400 text-white px-4 py-2 rounded-md text-sm font-medium"
+              disabled={exporting || !reportData}
+              title="導出完整的 Excel 報表（包含4個工作表）"
+              className="bg-green-600 hover:bg-green-700 disabled:bg-gray-400 disabled:cursor-not-allowed text-white px-4 py-2 rounded-lg text-sm font-medium transition-all shadow-sm hover:shadow-md"
             >
               {exporting ? (
                 <span className="flex items-center gap-2">
@@ -251,21 +538,22 @@ export default function ReportsPage() {
                     <circle className="opacity-25" cx="12" cy="12" r="10" stroke="currentColor" strokeWidth="4" fill="none" />
                     <path className="opacity-75" fill="currentColor" d="M4 12a8 8 0 018-8V0C5.373 0 0 5.373 0 12h4zm2 5.291A7.962 7.962 0 014 12H0c0 3.042 1.135 5.824 3 7.938l3-2.647z" />
                   </svg>
-                  導出中...
+                  <span className="hidden sm:inline">生成中...</span>
                 </span>
               ) : (
                 <span className="flex items-center gap-2">
                   <svg className="w-4 h-4 sm:w-5 sm:h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                    <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M9 19v-6a2 2 0 00-2-2H5a2 2 0 00-2 2v6a2 2 0 002 2h2a2 2 0 002-2zm0 0V9a2 2 0 012-2h2a2 2 0 012 2v10m-6 0a2 2 0 002 2h2a2 2 0 002-2m0 0V5a2 2 0 012-2h2a2 2 0 012 2v14a2 2 0 01-2 2h-2a2 2 0 01-2-2z" />
+                    <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M12 10v6m0 0l-3-3m3 3l3-3m2 8H7a2 2 0 01-2-2V5a2 2 0 012-2h5.586a1 1 0 01.707.293l5.414 5.414a1 1 0 01.293.707V19a2 2 0 01-2 2z" />
                   </svg>
-                  導出 Excel
+                  <span className="hidden sm:inline">Excel</span>
                 </span>
               )}
             </button>
             <button
               onClick={() => handleExport('pdf')}
-              disabled={exporting}
-              className="bg-red-600 hover:bg-red-700 disabled:bg-red-400 text-white px-4 py-2 rounded-md text-sm font-medium"
+              disabled={exporting || !reportData}
+              title="Export PDF Report (English version)"
+              className="bg-red-600 hover:bg-red-700 disabled:bg-gray-400 disabled:cursor-not-allowed text-white px-4 py-2 rounded-lg text-sm font-medium transition-all shadow-sm hover:shadow-md"
             >
               {exporting ? (
                 <span className="flex items-center gap-2">
@@ -273,14 +561,14 @@ export default function ReportsPage() {
                     <circle className="opacity-25" cx="12" cy="12" r="10" stroke="currentColor" strokeWidth="4" fill="none" />
                     <path className="opacity-75" fill="currentColor" d="M4 12a8 8 0 018-8V0C5.373 0 0 5.373 0 12h4zm2 5.291A7.962 7.962 0 014 12H0c0 3.042 1.135 5.824 3 7.938l3-2.647z" />
                   </svg>
-                  導出中...
+                  <span className="hidden sm:inline">生成中...</span>
                 </span>
               ) : (
                 <span className="flex items-center gap-2">
                   <svg className="w-4 h-4 sm:w-5 sm:h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
                     <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M7 21h10a2 2 0 002-2V9.414a1 1 0 00-.293-.707l-5.414-5.414A1 1 0 0012.586 3H7a2 2 0 00-2 2v14a2 2 0 002 2z" />
                   </svg>
-                  導出 PDF
+                  <span className="hidden sm:inline">PDF</span>
                 </span>
               )}
             </button>
