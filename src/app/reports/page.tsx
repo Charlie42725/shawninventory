@@ -4,6 +4,21 @@ import { useEffect, useState, useCallback } from 'react'
 import Link from 'next/link'
 import ProtectedLayout from '@/components/ProtectedLayout'
 import { formatCurrency, formatInteger } from '@/lib/format-utils'
+import {
+  LineChart,
+  Line,
+  BarChart,
+  Bar,
+  PieChart,
+  Pie,
+  Cell,
+  XAxis,
+  YAxis,
+  CartesianGrid,
+  Tooltip,
+  Legend,
+  ResponsiveContainer
+} from 'recharts'
 
 interface ReportData {
   totalSales: number
@@ -31,6 +46,27 @@ interface ReportData {
     grossProfit: number
     netProfit: number
   }>
+  expensesBreakdown: Array<{
+    category: string
+    amount: number
+  }>
+}
+
+// 費用類別顏色映射（用於圖表）
+const EXPENSE_CHART_COLORS: Record<string, string> = {
+  '公關品': '#a855f7',      // purple-500
+  '進貨成本': '#ef4444',    // red-500
+  '運費': '#3b82f6',        // blue-500
+  '行銷推廣': '#10b981',    // green-500
+  '平台手續費': '#f59e0b',  // yellow-500
+  '辦公用品': '#6b7280',    // gray-500
+  '差旅費': '#6366f1',      // indigo-500
+  '租金': '#f97316',        // orange-500
+  '水電費': '#06b6d4',      // cyan-500
+  '電信費': '#14b8a6',      // teal-500
+  '保險費': '#ec4899',      // pink-500
+  '稅費': '#f43f5e',        // rose-500
+  '其他': '#64748b',        // slate-500
 }
 
 export default function ReportsPage() {
@@ -41,14 +77,15 @@ export default function ReportsPage() {
   const [endDate, setEndDate] = useState('')
   const [useCustomRange, setUseCustomRange] = useState(false)
   const [exporting, setExporting] = useState(false)
+  const [granularity, setGranularity] = useState<'day' | 'week' | 'month'>('month')
 
   const fetchReportData = useCallback(async () => {
     try {
-      let url = `/api/reports?dateRange=${dateRange}`
+      let url = `/api/reports?dateRange=${dateRange}&granularity=${granularity}`
 
       // 如果使用自定義日期區間
       if (useCustomRange && startDate && endDate) {
-        url = `/api/reports?startDate=${startDate}&endDate=${endDate}`
+        url = `/api/reports?startDate=${startDate}&endDate=${endDate}&granularity=${granularity}`
       }
 
       const response = await fetch(url)
@@ -63,7 +100,7 @@ export default function ReportsPage() {
     } finally {
       setLoading(false)
     }
-  }, [dateRange, useCustomRange, startDate, endDate])
+  }, [dateRange, useCustomRange, startDate, endDate, granularity])
 
   useEffect(() => {
     fetchReportData()
@@ -250,48 +287,73 @@ export default function ReportsPage() {
           </div>
         </div>
 
-        {/* 核心財務指標 */}
-        <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-3 sm:gap-4">
-          <div className="bg-white dark:bg-gray-800 p-4 sm:p-6 rounded-lg shadow-sm transition-colors">
-            <h3 className="text-xs sm:text-sm font-medium text-gray-500 dark:text-gray-400 mb-2">總銷售額</h3>
-            <p className="text-2xl sm:text-3xl font-bold text-green-600 dark:text-green-500">
+        {/* 核心財務指標 - 提升質感版 */}
+        <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 2xl:grid-cols-5 gap-4">
+          <div className="group bg-gradient-to-br from-green-50 to-emerald-50 dark:from-green-900/20 dark:to-emerald-900/20 p-6 rounded-2xl shadow-md hover:shadow-xl transition-all duration-300 border border-green-100 dark:border-green-800">
+            <div className="flex items-center justify-between mb-3">
+              <h3 className="text-sm font-semibold text-green-700 dark:text-green-400">總銷售額</h3>
+              <svg className="w-8 h-8 text-green-600 dark:text-green-400 opacity-80" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M13 7h8m0 0v8m0-8l-8 8-4-4-6 6" />
+              </svg>
+            </div>
+            <p className="text-2xl lg:text-3xl font-bold bg-gradient-to-r from-green-600 to-emerald-600 dark:from-green-400 dark:to-emerald-400 bg-clip-text text-transparent break-words">
               {formatCurrency(reportData.totalSales || 0)}
             </p>
-            <p className="text-xs sm:text-sm text-gray-600 dark:text-gray-400 mt-1">營業收入</p>
+            <p className="text-xs text-green-600 dark:text-green-500 mt-2 font-medium">營業收入</p>
           </div>
 
-          <div className="bg-white dark:bg-gray-800 p-6 rounded-lg shadow-sm transition-colors">
-            <h3 className="text-sm font-medium text-gray-500 dark:text-gray-400 mb-2">銷售成本</h3>
-            <p className="text-3xl font-bold text-orange-600 dark:text-orange-500">
+          <div className="group bg-gradient-to-br from-orange-50 to-amber-50 dark:from-orange-900/20 dark:to-amber-900/20 p-6 rounded-2xl shadow-md hover:shadow-xl transition-all duration-300 border border-orange-100 dark:border-orange-800">
+            <div className="flex items-center justify-between mb-3">
+              <h3 className="text-sm font-semibold text-orange-700 dark:text-orange-400">銷售成本</h3>
+              <svg className="w-8 h-8 text-orange-600 dark:text-orange-400 opacity-80" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M12 8c-1.657 0-3 .895-3 2s1.343 2 3 2 3 .895 3 2-1.343 2-3 2m0-8c1.11 0 2.08.402 2.599 1M12 8V7m0 1v8m0 0v1m0-1c-1.11 0-2.08-.402-2.599-1M21 12a9 9 0 11-18 0 9 9 0 0118 0z" />
+              </svg>
+            </div>
+            <p className="text-2xl lg:text-3xl font-bold bg-gradient-to-r from-orange-600 to-amber-600 dark:from-orange-400 dark:to-amber-400 bg-clip-text text-transparent break-words">
               {formatCurrency(reportData.totalStockCost || 0)}
             </p>
-            <p className="text-sm text-gray-600 dark:text-gray-400 mt-1">已售商品成本</p>
+            <p className="text-xs text-orange-600 dark:text-orange-500 mt-2 font-medium">已售商品成本</p>
           </div>
 
-          <div className="bg-white dark:bg-gray-800 p-6 rounded-lg shadow-sm transition-colors">
-            <h3 className="text-sm font-medium text-gray-500 dark:text-gray-400 mb-2">營運支出</h3>
-            <p className="text-3xl font-bold text-red-600 dark:text-red-500">
+          <div className="group bg-gradient-to-br from-red-50 to-rose-50 dark:from-red-900/20 dark:to-rose-900/20 p-6 rounded-2xl shadow-md hover:shadow-xl transition-all duration-300 border border-red-100 dark:border-red-800">
+            <div className="flex items-center justify-between mb-3">
+              <h3 className="text-sm font-semibold text-red-700 dark:text-red-400">營運支出</h3>
+              <svg className="w-8 h-8 text-red-600 dark:text-red-400 opacity-80" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M17 9V7a2 2 0 00-2-2H5a2 2 0 00-2 2v6a2 2 0 002 2h2m2 4h10a2 2 0 002-2v-6a2 2 0 00-2-2H9a2 2 0 00-2 2v6a2 2 0 002 2zm7-5a2 2 0 11-4 0 2 2 0 014 0z" />
+              </svg>
+            </div>
+            <p className="text-2xl lg:text-3xl font-bold bg-gradient-to-r from-red-600 to-rose-600 dark:from-red-400 dark:to-rose-400 bg-clip-text text-transparent break-words">
               {formatCurrency(reportData.totalOperatingExpenses || 0)}
             </p>
-            <p className="text-sm text-gray-600 dark:text-gray-400 mt-1">日常營運費用</p>
+            <p className="text-xs text-red-600 dark:text-red-500 mt-2 font-medium">日常營運費用</p>
           </div>
 
-          <div className="bg-white dark:bg-gray-800 p-6 rounded-lg shadow-sm transition-colors">
-            <h3 className="text-sm font-medium text-gray-500 dark:text-gray-400 mb-2">毛利</h3>
-            <p className="text-3xl font-bold text-blue-600 dark:text-blue-500">
+          <div className="group bg-gradient-to-br from-blue-50 to-cyan-50 dark:from-blue-900/20 dark:to-cyan-900/20 p-6 rounded-2xl shadow-md hover:shadow-xl transition-all duration-300 border border-blue-100 dark:border-blue-800">
+            <div className="flex items-center justify-between mb-3">
+              <h3 className="text-sm font-semibold text-blue-700 dark:text-blue-400">毛利</h3>
+              <svg className="w-8 h-8 text-blue-600 dark:text-blue-400 opacity-80" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M9 19v-6a2 2 0 00-2-2H5a2 2 0 00-2 2v6a2 2 0 002 2h2a2 2 0 002-2zm0 0V9a2 2 0 012-2h2a2 2 0 012 2v10m-6 0a2 2 0 002 2h2a2 2 0 002-2m0 0V5a2 2 0 012-2h2a2 2 0 012 2v14a2 2 0 01-2 2h-2a2 2 0 01-2-2z" />
+              </svg>
+            </div>
+            <p className="text-2xl lg:text-3xl font-bold bg-gradient-to-r from-blue-600 to-cyan-600 dark:from-blue-400 dark:to-cyan-400 bg-clip-text text-transparent break-words">
               {formatCurrency(reportData.grossProfit || 0)}
             </p>
-            <p className="text-sm text-gray-600 dark:text-gray-400 mt-1">
+            <p className="text-xs text-blue-600 dark:text-blue-500 mt-2 font-medium">
               毛利率 {(reportData.totalSales || 0) > 0 ? (((reportData.grossProfit || 0) / (reportData.totalSales || 1)) * 100).toFixed(1) : '0.0'}%
             </p>
           </div>
 
-          <div className="bg-white dark:bg-gray-800 p-6 rounded-lg shadow-sm transition-colors">
-            <h3 className="text-sm font-medium text-gray-500 dark:text-gray-400 mb-2">淨利</h3>
-            <p className="text-3xl font-bold text-purple-600 dark:text-purple-500">
+          <div className="group bg-gradient-to-br from-purple-50 to-violet-50 dark:from-purple-900/20 dark:to-violet-900/20 p-6 rounded-2xl shadow-md hover:shadow-xl transition-all duration-300 border border-purple-100 dark:border-purple-800">
+            <div className="flex items-center justify-between mb-3">
+              <h3 className="text-sm font-semibold text-purple-700 dark:text-purple-400">淨利</h3>
+              <svg className="w-8 h-8 text-purple-600 dark:text-purple-400 opacity-80" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M12 8c-1.657 0-3 .895-3 2s1.343 2 3 2 3 .895 3 2-1.343 2-3 2m0-8c1.11 0 2.08.402 2.599 1M12 8V7m0 1v8m0 0v1m0-1c-1.11 0-2.08-.402-2.599-1M21 12a9 9 0 11-18 0 9 9 0 0118 0z" />
+              </svg>
+            </div>
+            <p className="text-2xl lg:text-3xl font-bold bg-gradient-to-r from-purple-600 to-violet-600 dark:from-purple-400 dark:to-violet-400 bg-clip-text text-transparent break-words">
               {formatCurrency(reportData.netProfit || 0)}
             </p>
-            <p className="text-sm text-gray-600 dark:text-gray-400 mt-1">
+            <p className="text-xs text-purple-600 dark:text-purple-500 mt-2 font-medium">
               淨利率 {(reportData.totalSales || 0) > 0 ? (((reportData.netProfit || 0) / (reportData.totalSales || 1)) * 100).toFixed(1) : '0.0'}%
             </p>
           </div>
@@ -408,9 +470,9 @@ export default function ReportsPage() {
         </div>
 
         {/* 熱銷產品 */}
-        <div className="bg-white dark:bg-gray-800 shadow-sm rounded-lg p-4 sm:p-6 transition-colors">
-          <h3 className="text-base sm:text-lg font-medium text-gray-900 dark:text-gray-100 mb-3 sm:mb-4 flex items-center gap-2">
-            <svg className="w-5 h-5 sm:w-6 sm:h-6 text-yellow-500 dark:text-yellow-400" fill="currentColor" viewBox="0 0 24 24">
+        <div className="bg-white dark:bg-gray-800 rounded-xl p-6 shadow-md border border-gray-100 dark:border-gray-700 transition-colors">
+          <h3 className="text-lg font-semibold text-gray-900 dark:text-gray-100 mb-4 flex items-center gap-2">
+            <svg className="w-5 h-5 text-yellow-500 dark:text-yellow-400" fill="currentColor" viewBox="0 0 24 24">
               <path d="M12 2L15.09 8.26L22 9.27L17 14.14L18.18 21.02L12 17.77L5.82 21.02L7 14.14L2 9.27L8.91 8.26L12 2Z" />
             </svg>
             熱銷產品排行
@@ -431,32 +493,15 @@ export default function ReportsPage() {
               </thead>
               <tbody>
                 {reportData.topProducts.map((product, index) => (
-                  <tr key={product.model} className="border-b border-gray-200 dark:border-gray-700 hover:bg-gray-50 dark:hover:bg-gray-700 transition-colors">
+                  <tr key={product.model} className="border-b border-gray-200 dark:border-gray-700 hover:bg-gray-50 dark:hover:bg-gray-700/50 transition-colors">
                     <td className="py-3 px-4">
-                      <span className="flex items-center gap-2">
-                        {index === 0 && (
-                          <svg className="w-5 h-5 sm:w-6 sm:h-6" viewBox="0 0 24 24" fill="none">
-                            <circle cx="12" cy="12" r="10" fill="#FFD700" />
-                            <text x="12" y="17" textAnchor="middle" fontSize="12" fontWeight="bold" fill="#8B4513">1</text>
-                          </svg>
-                        )}
-                        {index === 1 && (
-                          <svg className="w-5 h-5 sm:w-6 sm:h-6" viewBox="0 0 24 24" fill="none">
-                            <circle cx="12" cy="12" r="10" fill="#C0C0C0" />
-                            <text x="12" y="17" textAnchor="middle" fontSize="12" fontWeight="bold" fill="#4A4A4A">2</text>
-                          </svg>
-                        )}
-                        {index === 2 && (
-                          <svg className="w-5 h-5 sm:w-6 sm:h-6" viewBox="0 0 24 24" fill="none">
-                            <circle cx="12" cy="12" r="10" fill="#CD7F32" />
-                            <text x="12" y="17" textAnchor="middle" fontSize="12" fontWeight="bold" fill="#FFFFFF">3</text>
-                          </svg>
-                        )}
-                        {index > 2 && (
-                          <span className="w-5 h-5 sm:w-6 sm:h-6 flex items-center justify-center text-gray-500 dark:text-gray-400 font-semibold">
-                            {index + 1}
-                          </span>
-                        )}
+                      <span className={`inline-flex items-center justify-center w-6 h-6 rounded-full text-sm font-bold ${
+                        index === 0 ? 'bg-yellow-100 text-yellow-700 dark:bg-yellow-900/30 dark:text-yellow-400' :
+                        index === 1 ? 'bg-gray-200 text-gray-700 dark:bg-gray-700 dark:text-gray-300' :
+                        index === 2 ? 'bg-orange-100 text-orange-700 dark:bg-orange-900/30 dark:text-orange-400' :
+                        'text-gray-500 dark:text-gray-400'
+                      }`}>
+                        {index + 1}
                       </span>
                     </td>
                     <td className="py-3 px-4 font-semibold text-gray-900 dark:text-gray-100">{product.model || 'Unknown'}</td>
@@ -492,13 +537,383 @@ export default function ReportsPage() {
           </div>
         </div>
 
-        {/* 月度趨勢 */}
+        {/* 財務趨勢圖表 - 提升質感版 */}
+        <div className="group bg-gradient-to-br from-white to-blue-50/30 dark:from-gray-800 dark:to-blue-900/10 rounded-2xl p-6 shadow-lg hover:shadow-2xl transition-all duration-300 border border-gray-100 dark:border-gray-700">
+          <div className="flex flex-col gap-4 mb-6">
+            <div className="flex flex-col sm:flex-row items-start sm:items-center justify-between gap-4">
+              <h3 className="text-lg font-bold text-blue-600 dark:text-blue-400 flex items-center gap-2">
+                <svg className="w-6 h-6" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                  <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M7 12l3-3 3 3 4-4M8 21l4-4 4 4M3 4h18M4 4h16v12a1 1 0 01-1 1H5a1 1 0 01-1-1V4z" />
+                </svg>
+                📈 財務趨勢分析
+              </h3>
+
+              {/* 日期範圍控制 */}
+              <div className="flex flex-wrap gap-2 items-center">
+                <div className="flex gap-2">
+                  <button
+                    onClick={() => setUseCustomRange(false)}
+                    className={`px-3 py-1.5 rounded-lg text-xs font-medium transition-colors ${
+                      !useCustomRange
+                        ? 'bg-blue-600 text-white shadow-md'
+                        : 'bg-gray-100 dark:bg-gray-700 text-gray-700 dark:text-gray-300 hover:bg-gray-200 dark:hover:bg-gray-600'
+                    }`}
+                  >
+                    預設
+                  </button>
+                  <button
+                    onClick={() => setUseCustomRange(true)}
+                    className={`px-3 py-1.5 rounded-lg text-xs font-medium transition-colors ${
+                      useCustomRange
+                        ? 'bg-blue-600 text-white shadow-md'
+                        : 'bg-gray-100 dark:bg-gray-700 text-gray-700 dark:text-gray-300 hover:bg-gray-200 dark:hover:bg-gray-600'
+                    }`}
+                  >
+                    自定義
+                  </button>
+                </div>
+
+                {!useCustomRange && (
+                  <select
+                    value={dateRange}
+                    onChange={(e) => setDateRange(e.target.value)}
+                    className="px-3 py-1.5 border border-gray-200 dark:border-gray-600 rounded-lg focus:outline-none focus:ring-2 focus:ring-blue-500 text-xs text-gray-900 dark:text-gray-100 bg-white dark:bg-gray-700"
+                  >
+                    <option value="all">所有時間</option>
+                    <option value="week">最近一週</option>
+                    <option value="month">最近一個月</option>
+                    <option value="quarter">最近一季</option>
+                    <option value="year">最近一年</option>
+                    <option value="trend">過去12個月</option>
+                  </select>
+                )}
+
+                {useCustomRange && (
+                  <div className="flex gap-2 items-center">
+                    <input
+                      type="date"
+                      value={startDate}
+                      onChange={(e) => setStartDate(e.target.value)}
+                      className="px-2 py-1.5 border border-gray-200 dark:border-gray-600 rounded-lg focus:outline-none focus:ring-2 focus:ring-blue-500 text-xs text-gray-900 dark:text-gray-100 bg-white dark:bg-gray-700"
+                    />
+                    <span className="text-xs text-gray-500">至</span>
+                    <input
+                      type="date"
+                      value={endDate}
+                      onChange={(e) => setEndDate(e.target.value)}
+                      className="px-2 py-1.5 border border-gray-200 dark:border-gray-600 rounded-lg focus:outline-none focus:ring-2 focus:ring-blue-500 text-xs text-gray-900 dark:text-gray-100 bg-white dark:bg-gray-700"
+                    />
+                    <button
+                      onClick={fetchReportData}
+                      disabled={!startDate || !endDate}
+                      className="bg-blue-600 hover:bg-blue-700 disabled:bg-gray-400 text-white px-3 py-1.5 rounded-lg text-xs font-medium transition-colors"
+                    >
+                      查詢
+                    </button>
+                  </div>
+                )}
+              </div>
+            </div>
+
+            {/* 數據粒度切換 */}
+            <div className="flex items-center gap-3">
+              <span className="text-sm font-medium text-gray-600 dark:text-gray-400">查看密度：</span>
+              <div className="inline-flex rounded-lg border border-gray-200 dark:border-gray-600 bg-white dark:bg-gray-800 p-1">
+                <button
+                  onClick={() => setGranularity('day')}
+                  className={`px-4 py-1.5 rounded-md text-sm font-medium transition-all ${
+                    granularity === 'day'
+                      ? 'bg-blue-600 text-white shadow-sm'
+                      : 'text-gray-700 dark:text-gray-300 hover:bg-gray-100 dark:hover:bg-gray-700'
+                  }`}
+                >
+                  日
+                </button>
+                <button
+                  onClick={() => setGranularity('week')}
+                  className={`px-4 py-1.5 rounded-md text-sm font-medium transition-all ${
+                    granularity === 'week'
+                      ? 'bg-blue-600 text-white shadow-sm'
+                      : 'text-gray-700 dark:text-gray-300 hover:bg-gray-100 dark:hover:bg-gray-700'
+                  }`}
+                >
+                  週
+                </button>
+                <button
+                  onClick={() => setGranularity('month')}
+                  className={`px-4 py-1.5 rounded-md text-sm font-medium transition-all ${
+                    granularity === 'month'
+                      ? 'bg-blue-600 text-white shadow-sm'
+                      : 'text-gray-700 dark:text-gray-300 hover:bg-gray-100 dark:hover:bg-gray-700'
+                  }`}
+                >
+                  月
+                </button>
+              </div>
+            </div>
+          </div>
+          <ResponsiveContainer width="100%" height={350}>
+            <LineChart
+              data={reportData.monthlySales}
+              margin={{ top: 5, right: 10, left: 0, bottom: 5 }}
+            >
+              <defs>
+                <linearGradient id="salesGradient" x1="0" y1="0" x2="0" y2="1">
+                  <stop offset="5%" stopColor="#10b981" stopOpacity={0.3}/>
+                  <stop offset="95%" stopColor="#10b981" stopOpacity={0}/>
+                </linearGradient>
+                <linearGradient id="profitGradient" x1="0" y1="0" x2="0" y2="1">
+                  <stop offset="5%" stopColor="#8b5cf6" stopOpacity={0.3}/>
+                  <stop offset="95%" stopColor="#8b5cf6" stopOpacity={0}/>
+                </linearGradient>
+              </defs>
+              <CartesianGrid strokeDasharray="3 3" className="opacity-20" stroke="#cbd5e1" />
+              <XAxis
+                dataKey="month"
+                tick={{ fontSize: 12 }}
+                stroke="#94a3b8"
+                className="text-gray-600 dark:text-gray-400"
+              />
+              <YAxis
+                tick={{ fontSize: 12 }}
+                stroke="#94a3b8"
+                className="text-gray-600 dark:text-gray-400"
+                tickFormatter={(value) => `$${(value / 1000).toFixed(0)}k`}
+              />
+              <Tooltip
+                contentStyle={{
+                  backgroundColor: 'rgba(255, 255, 255, 0.98)',
+                  border: 'none',
+                  borderRadius: '12px',
+                  boxShadow: '0 10px 40px rgba(0, 0, 0, 0.15)',
+                  padding: '12px 16px'
+                }}
+                formatter={(value: number) => formatCurrency(value)}
+              />
+              <Legend
+                wrapperStyle={{ fontSize: '14px', fontWeight: '500' }}
+                iconType="line"
+              />
+              <Line
+                type="monotone"
+                dataKey="sales"
+                name="銷售額"
+                stroke="#10b981"
+                strokeWidth={3}
+                dot={{ fill: '#10b981', r: 5, strokeWidth: 2, stroke: '#fff' }}
+                activeDot={{ r: 7, strokeWidth: 2 }}
+                animationBegin={0}
+                animationDuration={1000}
+              />
+              <Line
+                type="monotone"
+                dataKey="stockCost"
+                name="銷售成本"
+                stroke="#f59e0b"
+                strokeWidth={2}
+                dot={{ fill: '#f59e0b', r: 4, strokeWidth: 2, stroke: '#fff' }}
+                activeDot={{ r: 6 }}
+                animationBegin={200}
+                animationDuration={1000}
+              />
+              <Line
+                type="monotone"
+                dataKey="grossProfit"
+                name="毛利"
+                stroke="#3b82f6"
+                strokeWidth={3}
+                dot={{ fill: '#3b82f6', r: 5, strokeWidth: 2, stroke: '#fff' }}
+                activeDot={{ r: 7, strokeWidth: 2 }}
+                animationBegin={400}
+                animationDuration={1000}
+              />
+              <Line
+                type="monotone"
+                dataKey="netProfit"
+                name="淨利"
+                stroke="#8b5cf6"
+                strokeWidth={3}
+                dot={{ fill: '#8b5cf6', r: 5, strokeWidth: 2, stroke: '#fff' }}
+                activeDot={{ r: 7, strokeWidth: 2 }}
+                animationBegin={600}
+                animationDuration={1000}
+              />
+            </LineChart>
+          </ResponsiveContainer>
+        </div>
+
+        {/* 營業費用分析與熱銷產品 */}
+        <div className="grid grid-cols-1 lg:grid-cols-2 gap-6">
+          {/* 營業費用分類餅圖 - 提升質感版 */}
+          <div className="group bg-gradient-to-br from-white to-gray-50 dark:from-gray-800 dark:to-gray-900 rounded-2xl p-6 shadow-lg hover:shadow-2xl transition-all duration-300 border border-gray-100 dark:border-gray-700">
+            <div className="flex items-center justify-between mb-6">
+              <h3 className="text-lg font-bold text-purple-600 dark:text-purple-400 flex items-center gap-2">
+                <svg className="w-6 h-6" fill="currentColor" viewBox="0 0 24 24">
+                  <path d="M12 2C6.48 2 2 6.48 2 12s4.48 10 10 10 10-4.48 10-10S17.52 2 12 2zm0 18c-4.41 0-8-3.59-8-8s3.59-8 8-8 8 3.59 8 8-3.59 8-8 8z"/>
+                  <path d="M12 6v6l4 2"/>
+                </svg>
+                💰 營業費用結構
+              </h3>
+              <div className="text-sm font-medium text-gray-500 dark:text-gray-400">
+                總計 {formatCurrency(reportData.totalOperatingExpenses)}
+              </div>
+            </div>
+
+            {reportData.expensesBreakdown && reportData.expensesBreakdown.length > 0 ? (
+              <>
+                <ResponsiveContainer width="100%" height={280}>
+                  <PieChart>
+                    <Pie
+                      data={reportData.expensesBreakdown}
+                      cx="50%"
+                      cy="50%"
+                      labelLine={false}
+                      label={(entry: any) => {
+                        const percent = reportData.totalOperatingExpenses > 0
+                          ? ((entry.amount / reportData.totalOperatingExpenses) * 100).toFixed(1)
+                          : '0.0'
+                        return parseFloat(percent) > 5 ? `${entry.category} ${percent}%` : ''
+                      }}
+                      outerRadius={85}
+                      innerRadius={45}
+                      fill="#8884d8"
+                      dataKey="amount"
+                      animationBegin={0}
+                      animationDuration={800}
+                    >
+                      {reportData.expensesBreakdown.map((entry, index) => (
+                        <Cell
+                          key={`cell-${index}`}
+                          fill={EXPENSE_CHART_COLORS[entry.category] || '#64748b'}
+                          className="hover:opacity-80 transition-opacity cursor-pointer"
+                        />
+                      ))}
+                    </Pie>
+                    <Tooltip
+                      contentStyle={{
+                        backgroundColor: 'rgba(255, 255, 255, 0.98)',
+                        border: 'none',
+                        borderRadius: '12px',
+                        boxShadow: '0 10px 40px rgba(0, 0, 0, 0.15)',
+                        padding: '12px 16px'
+                      }}
+                      formatter={(value: number) => [formatCurrency(value), '金額']}
+                    />
+                  </PieChart>
+                </ResponsiveContainer>
+                <div className="mt-6 grid grid-cols-2 gap-2 max-h-32 overflow-y-auto">
+                  {reportData.expensesBreakdown.map((item, index) => (
+                    <div key={index} className="flex items-center gap-2 p-2 rounded-lg hover:bg-gray-100 dark:hover:bg-gray-700/50 transition-colors">
+                      <div
+                        className="w-3 h-3 rounded-full flex-shrink-0"
+                        style={{ backgroundColor: EXPENSE_CHART_COLORS[item.category] || '#64748b' }}
+                      ></div>
+                      <div className="flex-1 min-w-0">
+                        <div className="text-xs font-medium text-gray-700 dark:text-gray-300 truncate">
+                          {item.category}
+                        </div>
+                        <div className="text-xs text-gray-500 dark:text-gray-400">
+                          {formatCurrency(item.amount)}
+                        </div>
+                      </div>
+                    </div>
+                  ))}
+                </div>
+              </>
+            ) : (
+              <div className="h-64 flex items-center justify-center text-gray-400 dark:text-gray-500">
+                暫無費用數據
+              </div>
+            )}
+          </div>
+
+          {/* 熱銷產品橫條圖 - 提升質感版 */}
+          <div className="group bg-gradient-to-br from-white to-gray-50 dark:from-gray-800 dark:to-gray-900 rounded-2xl p-6 shadow-lg hover:shadow-2xl transition-all duration-300 border border-gray-100 dark:border-gray-700">
+            <div className="flex items-center justify-between mb-6">
+              <h3 className="text-lg font-bold text-yellow-600 dark:text-yellow-400 flex items-center gap-2">
+                <svg className="w-6 h-6" fill="currentColor" viewBox="0 0 24 24">
+                  <path d="M12 2L15.09 8.26L22 9.27L17 14.14L18.18 21.02L12 17.77L5.82 21.02L7 14.14L2 9.27L8.91 8.26L12 2Z" />
+                </svg>
+                🏆 Top 5 熱銷產品
+              </h3>
+              <div className="text-sm font-medium text-gray-500 dark:text-gray-400">
+                毛利分析
+              </div>
+            </div>
+            <ResponsiveContainer width="100%" height={280}>
+              <BarChart
+                data={reportData.topProducts.slice(0, 5)}
+                layout="vertical"
+                margin={{ top: 5, right: 20, left: 5, bottom: 5 }}
+              >
+                <defs>
+                  <linearGradient id="profitGradient" x1="0" y1="0" x2="1" y2="0">
+                    <stop offset="0%" stopColor="#3b82f6" stopOpacity={0.8}/>
+                    <stop offset="100%" stopColor="#3b82f6" stopOpacity={1}/>
+                  </linearGradient>
+                  <linearGradient id="costGradient" x1="0" y1="0" x2="1" y2="0">
+                    <stop offset="0%" stopColor="#f59e0b" stopOpacity={0.6}/>
+                    <stop offset="100%" stopColor="#f59e0b" stopOpacity={0.9}/>
+                  </linearGradient>
+                </defs>
+                <CartesianGrid strokeDasharray="3 3" className="opacity-20" stroke="#cbd5e1" />
+                <XAxis
+                  type="number"
+                  tick={{ fontSize: 11 }}
+                  tickFormatter={(value) => `$${(value / 1000).toFixed(0)}k`}
+                  stroke="#94a3b8"
+                />
+                <YAxis
+                  dataKey="model"
+                  type="category"
+                  tick={{ fontSize: 10 }}
+                  width={80}
+                  stroke="#94a3b8"
+                />
+                <Tooltip
+                  contentStyle={{
+                    backgroundColor: 'rgba(255, 255, 255, 0.98)',
+                    border: 'none',
+                    borderRadius: '12px',
+                    boxShadow: '0 10px 40px rgba(0, 0, 0, 0.15)',
+                    padding: '12px 16px'
+                  }}
+                  formatter={(value: number, name: string) => {
+                    if (name === 'grossMargin') return [`${value.toFixed(1)}%`, '毛利率']
+                    return [formatCurrency(value), name === 'grossProfit' ? '毛利' : '成本']
+                  }}
+                />
+                <Legend wrapperStyle={{ fontSize: '13px', fontWeight: '500' }} />
+                <Bar
+                  dataKey="grossProfit"
+                  name="毛利"
+                  fill="url(#profitGradient)"
+                  stackId="a"
+                  radius={[0, 8, 8, 0]}
+                  animationBegin={0}
+                  animationDuration={800}
+                />
+                <Bar
+                  dataKey="cogs"
+                  name="成本"
+                  fill="url(#costGradient)"
+                  stackId="a"
+                  radius={[0, 8, 8, 0]}
+                  animationBegin={200}
+                  animationDuration={800}
+                />
+              </BarChart>
+            </ResponsiveContainer>
+          </div>
+        </div>
+
+        {/* 月度趨勢表格 */}
         <div className="bg-white dark:bg-gray-800 shadow-sm rounded-lg p-4 sm:p-6 transition-colors">
           <h3 className="text-base sm:text-lg font-medium text-gray-900 dark:text-gray-100 mb-3 sm:mb-4 flex items-center gap-2">
             <svg className="w-5 h-5 sm:w-6 sm:h-6 text-gray-600 dark:text-gray-400" fill="none" stroke="currentColor" viewBox="0 0 24 24">
               <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M13 7h8m0 0v8m0-8l-8 8-4-4-6 6" />
             </svg>
-            月度財務趨勢
+            📊 月度財務明細
           </h3>
           <div className="overflow-x-auto -mx-2 sm:mx-0">
             <table className="min-w-full">

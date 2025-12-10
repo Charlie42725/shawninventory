@@ -73,6 +73,7 @@ export async function GET(request: Request) {
     const dateRange = searchParams.get('dateRange');
     const customStartDate = searchParams.get('startDate');
     const customEndDate = searchParams.get('endDate');
+    const granularity = searchParams.get('granularity') || 'month'; // day, week, month
 
     let startDate: string | undefined;
     let endDate: string | undefined;
@@ -132,8 +133,8 @@ export async function GET(request: Request) {
     const grossProfit = totalRevenue - totalCostOfGoodsSold;
     const netProfit = grossProfit - totalExpenses;
 
-    // Generate monthly trend data
-    const monthlySales = generateMonthlyTrendData(sales, expenses, products);
+    // Generate trend data based on granularity
+    const monthlySales = generateTrendData(sales, expenses, products, granularity);
 
     // Calculate top products with COGS and gross margin
     const productStats = new Map();
@@ -177,6 +178,20 @@ export async function GET(request: Request) {
       .sort((a, b) => b.revenue - a.revenue)
       .slice(0, 10);
 
+    // 計算費用分類統計
+    const expensesByCategory = new Map();
+    expenses.forEach((expense) => {
+      const category = expense.category || '其他';
+      if (!expensesByCategory.has(category)) {
+        expensesByCategory.set(category, 0);
+      }
+      expensesByCategory.set(category, expensesByCategory.get(category) + expense.amount);
+    });
+
+    const expensesBreakdown = Array.from(expensesByCategory.entries())
+      .map(([category, amount]) => ({ category, amount }))
+      .sort((a, b) => b.amount - a.amount);
+
     return NextResponse.json({
       totalSales: totalRevenue,
       totalStockCost: totalCostOfGoodsSold,
@@ -185,7 +200,8 @@ export async function GET(request: Request) {
       netProfit,
       productsSold: sales.length,
       topProducts,
-      monthlySales
+      monthlySales,
+      expensesBreakdown
     });
 
   } catch (error) {
@@ -197,19 +213,50 @@ export async function GET(request: Request) {
   }
 }
 
-function generateMonthlyTrendData(sales: any[], expenses: any[], products: any[]) {
-  const monthlyData = new Map();
+function generateTrendData(sales: any[], expenses: any[], products: any[], granularity: string) {
+  const trendData = new Map();
+
+  // Helper function to generate key based on granularity
+  const getDateKey = (date: Date) => {
+    const year = date.getFullYear();
+    const month = date.getMonth() + 1;
+    const day = date.getDate();
+
+    if (granularity === 'day') {
+      return `${year}-${String(month).padStart(2, '0')}-${String(day).padStart(2, '0')}`;
+    } else if (granularity === 'week') {
+      // Get week number
+      const firstDayOfYear = new Date(year, 0, 1);
+      const pastDaysOfYear = (date.getTime() - firstDayOfYear.getTime()) / 86400000;
+      const weekNumber = Math.ceil((pastDaysOfYear + firstDayOfYear.getDay() + 1) / 7);
+      return `${year}-W${String(weekNumber).padStart(2, '0')}`;
+    } else { // month
+      return `${year}-${String(month).padStart(2, '0')}`;
+    }
+  };
+
+  // Helper function to generate readable name
+  const getDateName = (date: Date, key: string) => {
+    if (granularity === 'day') {
+      return date.toLocaleDateString('zh-TW', { year: 'numeric', month: 'short', day: 'numeric' });
+    } else if (granularity === 'week') {
+      const weekNum = key.split('-W')[1];
+      return `${date.getFullYear()} 第${weekNum}週`;
+    } else { // month
+      return date.toLocaleDateString('zh-TW', { year: 'numeric', month: 'long' });
+    }
+  };
 
   // Process sales data
   sales.forEach((sale) => {
     const date = new Date(sale.date || sale.created_at);
-    const monthKey = `${date.getFullYear()}-${String(date.getMonth() + 1).padStart(2, '0')}`;
-    const monthName = date.toLocaleDateString('zh-TW', { year: 'numeric', month: 'long' });
+    const dateKey = getDateKey(date);
+    const dateName = getDateName(date, dateKey);
 
-    if (!monthlyData.has(monthKey)) {
-      monthlyData.set(monthKey, {
-        month: monthKey,
-        monthName,
+    if (!trendData.has(dateKey)) {
+      trendData.set(dateKey, {
+        month: dateKey,
+        monthName: dateName,
         sales: 0,
         stockCost: 0,
         operatingExpenses: 0,
@@ -220,23 +267,23 @@ function generateMonthlyTrendData(sales: any[], expenses: any[], products: any[]
       });
     }
 
-    const monthData = monthlyData.get(monthKey);
+    const periodData = trendData.get(dateKey);
     const price = Number(sale.unit_price) || 0;
     const qty = Number(sale.quantity) || 0;
-    monthData.sales += price * qty;
-    monthData.salesData.push(sale);
+    periodData.sales += price * qty;
+    periodData.salesData.push(sale);
   });
 
   // Process expenses data
   expenses.forEach((expense) => {
     const date = new Date(expense.date || expense.created_at);
-    const monthKey = `${date.getFullYear()}-${String(date.getMonth() + 1).padStart(2, '0')}`;
-    const monthName = date.toLocaleDateString('zh-TW', { year: 'numeric', month: 'long' });
+    const dateKey = getDateKey(date);
+    const dateName = getDateName(date, dateKey);
 
-    if (!monthlyData.has(monthKey)) {
-      monthlyData.set(monthKey, {
-        month: monthKey,
-        monthName,
+    if (!trendData.has(dateKey)) {
+      trendData.set(dateKey, {
+        month: dateKey,
+        monthName: dateName,
         sales: 0,
         stockCost: 0,
         operatingExpenses: 0,
@@ -247,23 +294,23 @@ function generateMonthlyTrendData(sales: any[], expenses: any[], products: any[]
       });
     }
 
-    const monthData = monthlyData.get(monthKey);
-    monthData.operatingExpenses += Number(expense.amount) || 0;
+    const periodData = trendData.get(dateKey);
+    periodData.operatingExpenses += Number(expense.amount) || 0;
   });
 
-  // Calculate costs and profits for each month
-  for (const [monthKey, monthData] of monthlyData.entries()) {
-    if (monthData.salesData.length > 0) {
-      monthData.stockCost = calculateSalesCostFromInventory(monthData.salesData, products);
+  // Calculate costs and profits for each period
+  for (const [dateKey, periodData] of trendData.entries()) {
+    if (periodData.salesData.length > 0) {
+      periodData.stockCost = calculateSalesCostFromInventory(periodData.salesData, products);
     }
 
-    monthData.totalExpenses = monthData.operatingExpenses;
-    monthData.grossProfit = monthData.sales - monthData.stockCost;
-    monthData.netProfit = monthData.grossProfit - monthData.totalExpenses;
+    periodData.totalExpenses = periodData.operatingExpenses;
+    periodData.grossProfit = periodData.sales - periodData.stockCost;
+    periodData.netProfit = periodData.grossProfit - periodData.totalExpenses;
 
     // Clean up temporary data
-    delete monthData.salesData;
+    delete periodData.salesData;
   }
 
-  return Array.from(monthlyData.values()).sort((a, b) => a.month.localeCompare(b.month));
+  return Array.from(trendData.values()).sort((a, b) => a.month.localeCompare(b.month));
 }
